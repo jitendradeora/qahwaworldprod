@@ -7,7 +7,38 @@ import { Badge } from "../ui/badge";
 import { SEO } from "../SEO";
 import { getTranslations, getCategoryTranslation } from "@/lib/translations";
 import { getLocalizedPath } from "@/lib/localization";
-import { getHomePageLatestArticles } from "@/lib/actions/home/homeAction";
+import { getHomePageLatestArticles, getTrendingPostsFromHomePage } from "@/lib/actions/home/homeAction";
+
+const decodeHTMLEntities = (text: string = ""): string => {
+  const entityMap: Record<string, string> = {
+    "&quot;": '"',
+    "&#34;": '"',
+    "&#8220;": '"',
+    "&#8221;": '"',
+    "&#8216;": "'",
+    "&#8217;": "'",
+    "&#39;": "'",
+    "&apos;": "'",
+    "&amp;": "&",
+    "&nbsp;": " ",
+    "&ndash;": "-",
+    "&#8211;": "-",
+    "&mdash;": "-",
+    "&#8212;": "-",
+    "&hellip;": "...",
+    "&#8230;": "...",
+  };
+
+  let decoded = text.replace(/&[a-zA-Z0-9#]+;/g, (entity) => entityMap[entity] || entity);
+
+  decoded = decoded
+    .replace(/&#x([\da-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
+
+  return decoded;
+};
+
+const sanitizeExcerpt = (text: string = "") => decodeHTMLEntities(text.replace(/<[^>]*>/g, ""));
 
 interface HomePageProps {
   locale: string;
@@ -34,11 +65,12 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
 
   // Fetch latest articles from GraphQL
   const latestArticles = await getHomePageLatestArticles(locale);
+  const trendingArticles = await getTrendingPostsFromHomePage(locale);
 
   // Use dynamic data for main content, fallback to mock for other sections
-  const trendingArticles = mockArticles.slice(2, 6);
   const featuredArticle = latestArticles.length > 0 ? latestArticles[0] : null;
   const newsArticles = latestArticles.length > 1 ? latestArticles.slice(1) : [];
+  const fallbackTrendingArticles = mockArticles.slice(2, 6);
   const spotlightArticles = mockArticles.slice(4, 8);
   const moreArticles = mockArticles.slice(8, 12);
 
@@ -87,17 +119,17 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
                       {getLocalizedCategory(featuredArticle.categories)?.name || 'News'}
                     </Badge>
                     <h2 className="mb-4 text-amber-900 dark:text-amber-100 text-3xl">
-                      {featuredArticle.title}
+                      {decodeHTMLEntities(featuredArticle.title)}
                     </h2>
                     <div className="aspect-video overflow-hidden mb-6">
                       <img
                         src={featuredArticle.featuredImage?.node?.sourceUrl}
-                        alt={featuredArticle.featuredImage?.node?.altText || featuredArticle.title}
+                        alt={featuredArticle.featuredImage?.node?.altText || decodeHTMLEntities(featuredArticle.title)}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <p className="text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
-                      {featuredArticle.excerpt.replace(/<[^>]*>/g, '')}
+                      {sanitizeExcerpt(featuredArticle.excerpt)}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
                       Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
@@ -148,37 +180,42 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
                 {/* Remaining LatestArticles */}
                 <div className="mt-8 mb-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {newsArticles.length > 0 ? newsArticles.slice(0, 8).map((article) => (
-                      <Link
-                        key={article.slug}
-                        href={getPath(`/${getLocalizedCategory(article.categories)?.slug}/${article.slug}`)}
-                        className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow block"
-                      >
-                        <div className="aspect-video overflow-hidden">
-                          <img
-                            src={article.featuredImage?.node?.sourceUrl}
-                            alt={article.featuredImage?.node?.altText || article.title}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 mb-2">
-                            {getLocalizedCategory(article.categories)?.name || 'News'}
-                          </Badge>
-                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            <span>{new Date(article.date).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-                            <span>•</span>
-                            <span>5 min read</span>
+                    {newsArticles.length > 0 ? newsArticles.slice(0, 8).map((article) => {
+                      const decodedTitle = decodeHTMLEntities(article.title);
+                      const sanitizedExcerpt = sanitizeExcerpt(article.excerpt);
+
+                      return (
+                        <Link
+                          key={article.slug}
+                          href={getPath(`/${getLocalizedCategory(article.categories)?.slug}/${article.slug}`)}
+                          className="bg-white dark:bg-gray-800 border dark:border-gray-700 overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow block"
+                        >
+                          <div className="aspect-video overflow-hidden">
+                            <img
+                              src={article.featuredImage?.node?.sourceUrl}
+                              alt={article.featuredImage?.node?.altText || decodedTitle}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
                           </div>
-                          <h3 className="text-lg text-gray-900 dark:text-gray-100 group-hover:text-amber-700 dark:group-hover:text-amber-500 transition-colors line-clamp-2 mb-2">
-                            {article.title}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                            {article.excerpt.replace(/<[^>]*>/g, '')}
-                          </p>
-                        </div>
-                      </Link>
-                    )) : (
+                          <div className="p-4">
+                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 mb-2">
+                              {getLocalizedCategory(article.categories)?.name || 'News'}
+                            </Badge>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                              <span>{new Date(article.date).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                              <span>•</span>
+                              <span>5 min read</span>
+                            </div>
+                            <h3 className="text-lg text-gray-900 dark:text-gray-100 group-hover:text-amber-700 dark:group-hover:text-amber-500 transition-colors line-clamp-2 mb-2">
+                              {decodedTitle}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                              {sanitizedExcerpt}
+                            </p>
+                          </div>
+                        </Link>
+                      );
+                    }) : (
                       // Fallback to mock articles if no dynamic data
                       mockArticles.slice(1, 8).map((article) => (
                         <Link
@@ -225,34 +262,71 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
                     </h2>
                   </div>
                   <div className="space-y-6">
-                    {trendingArticles.map((article) => (
-                      <Link
-                        key={article.id}
-                        href={getPath(`/${article.category.toLowerCase().replace(' ', '-')}/${article.id}`)}
-                        className="group cursor-pointer block"
-                      >
-                        <div className="aspect-video overflow-hidden mb-3">
-                          <img
-                            src={article.image}
-                            alt={article.title}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 mb-2">
-                          {article.category}
-                        </Badge>
-                        <h3 className="text-base text-gray-900 dark:text-gray-100 group-hover:text-amber-700 dark:group-hover:text-amber-500 transition-colors line-clamp-2 mb-2">
-                          {article.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
-                          {article.excerpt}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-                          <Clock className="w-3 h-3" />
-                          <span>{article.readTime}</span>
-                        </div>
-                      </Link>
-                    ))}
+                    {trendingArticles.length > 0
+                      ? trendingArticles.map((article) => {
+                          const primaryCategory = article.categories?.[0];
+                          const categorySlug = primaryCategory?.slug || "news";
+                          const categoryName = primaryCategory?.name || "News";
+                          const decodedTitle = decodeHTMLEntities(article.title);
+                          const sanitizedExcerpt = sanitizeExcerpt(article.excerpt);
+
+                          return (
+                            <Link
+                              key={article.id}
+                              href={getPath(`/${categorySlug}/${article.slug}`)}
+                              className="group cursor-pointer block"
+                            >
+                              <div className="aspect-video overflow-hidden mb-3">
+                                <img
+                                  src={article.featuredImage}
+                                  alt={decodedTitle}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                              </div>
+                              <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 mb-2">
+                                {categoryName}
+                              </Badge>
+                              <h3 className="text-base text-gray-900 dark:text-gray-100 group-hover:text-amber-700 dark:group-hover:text-amber-500 transition-colors line-clamp-2 mb-2">
+                                {decodedTitle}
+                              </h3>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
+                                {sanitizedExcerpt}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                                <Clock className="w-3 h-3" />
+                                <span>{`${article.readingTime} min read`}</span>
+                              </div>
+                            </Link>
+                          );
+                        })
+                      : fallbackTrendingArticles.map((article) => (
+                          <Link
+                            key={article.id}
+                            href={getPath(`/${article.category.toLowerCase().replace(' ', '-')}/${article.id}`)}
+                            className="group cursor-pointer block"
+                          >
+                            <div className="aspect-video overflow-hidden mb-3">
+                              <img
+                                src={article.image}
+                                alt={article.title}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 mb-2">
+                              {article.category}
+                            </Badge>
+                            <h3 className="text-base text-gray-900 dark:text-gray-100 group-hover:text-amber-700 dark:group-hover:text-amber-500 transition-colors line-clamp-2 mb-2">
+                              {article.title}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
+                              {article.excerpt}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                              <Clock className="w-3 h-3" />
+                              <span>{article.readTime}</span>
+                            </div>
+                          </Link>
+                        ))}
                   </div>
                 </div>
               </aside>

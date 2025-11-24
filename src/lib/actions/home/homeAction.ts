@@ -1,5 +1,5 @@
 import client from "@/lib/client/ApolloClient";
-import { GET_HOME_PAGE_LATEST_ARTICLES } from "@/lib/wordpress/queries/home/homeQuery";
+import { GET_HOME_PAGE_LATEST_ARTICLES, GET_TRENDING_POSTS_FROM_HOME_PAGE } from "@/lib/wordpress/queries/home/homeQuery";
 
 export interface FeaturedImage {
   node: {
@@ -61,6 +61,53 @@ export async function getHomePageLatestArticles(language: string = "en"): Promis
     return result.data.posts.nodes;
   } catch (error) {
     console.error("Error fetching home page articles:", error);
+    return [];
+  }
+}
+
+export interface TrendingPostCategory {
+  name: string;
+  slug: string;
+}
+
+export interface TrendingPost {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage: string;
+  readingTime: number;
+  categories: TrendingPostCategory[];
+}
+
+export interface TrendingPostsDataType {
+  trendingPosts: TrendingPost[];
+}
+
+export async function getTrendingPostsFromHomePage(lang: string): Promise<TrendingPost[]> {
+  try {
+    const result = await client.query<TrendingPostsDataType>({
+      query: GET_TRENDING_POSTS_FROM_HOME_PAGE,
+      variables: {
+        lang,
+      },
+      fetchPolicy: "no-cache",
+      context: {
+        fetchOptions: {
+          next: { 
+            tags: ['wordpress']
+          },
+        },
+      },
+    });
+
+    if (result.error || !result.data?.trendingPosts) {
+      return [];
+    }
+
+    return result.data.trendingPosts;
+  } catch (error) {
+    console.error("Error fetching trending posts:", error);
     return [];
   }
 }
