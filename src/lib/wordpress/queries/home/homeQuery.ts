@@ -31,3 +31,20 @@ export const GET_HOME_PAGE_LATEST_ARTICLES = gql`
     }
 }
 `;
+
+export const GET_TRENDING_POSTS_FROM_HOME_PAGE = gql`
+  query getTrendingPostsFromHomePage($lang: String!) {
+  trendingPosts(language: $lang) {
+    id
+    title
+    slug
+    excerpt
+    featuredImage
+    readingTime
+    categories {
+      name
+      slug
+    }
+  }
+}
+`;
