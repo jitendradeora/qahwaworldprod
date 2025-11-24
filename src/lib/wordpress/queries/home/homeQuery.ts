@@ -48,3 +48,64 @@ export const GET_TRENDING_POSTS_FROM_HOME_PAGE = gql`
   }
 }
 `;
+
+
+export const GET_CATEGORIES_SECTION_FOR_HOME_PAGE = gql`
+  query getCategoriesSectionForHomePage($lang: String!) {
+    getCategorySectionData(language: $lang) {
+      sectionTitle
+      sectionBackgroundColor
+      viewAllButtonLabel
+      viewAllButtonUrl
+      category {
+        id
+        name
+        slug
+      }
+      posts {
+        id
+        title
+        slug
+        featuredImage
+        date
+        readingTime
+      }
+    }
+  }
+`;
+
+
+export const GET_SPOTLIGHT_DATA_FOR_HOME_PAGE = gql`
+  query GetSpotlightDataForHomePage($lang: String!) {
+  getSpotlightData(language: $lang) {
+    sectionTitle
+    image
+    title
+    description
+    buttonLabel
+    buttonLink
+
+    category {
+      id
+      name
+      slug
+    }
+
+    posts {
+      id
+      title
+      slug
+      excerpt
+      featuredImage
+      date
+      readingTime
+      author
+      categories {
+        id
+        name
+        slug
+      }
+    }
+  }
+}
+`;
