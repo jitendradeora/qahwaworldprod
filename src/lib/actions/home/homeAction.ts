@@ -1,5 +1,5 @@
 import client from "@/lib/client/ApolloClient";
-import { GET_HOME_PAGE_LATEST_ARTICLES, GET_TRENDING_POSTS_FROM_HOME_PAGE } from "@/lib/wordpress/queries/home/homeQuery";
+import { GET_HOME_PAGE_LATEST_ARTICLES, GET_TRENDING_POSTS_FROM_HOME_PAGE, GET_CATEGORIES_SECTION_FOR_HOME_PAGE, GET_SPOTLIGHT_DATA_FOR_HOME_PAGE } from "@/lib/wordpress/queries/home/homeQuery";
 
 export interface FeaturedImage {
   node: {
@@ -39,16 +39,18 @@ export interface HomePageDataType {
 
 export async function getHomePageLatestArticles(language: string = "en"): Promise<Post[]> {
   try {
+    // Normalize language to lowercase for consistency
+    const normalizedLanguage = language.toLowerCase();
     const result = await client.query<HomePageDataType>({
       query: GET_HOME_PAGE_LATEST_ARTICLES,
       variables: {
-        language,
+        language: normalizedLanguage,
       },
       fetchPolicy: "no-cache",
       context: {
         fetchOptions: {
           next: { 
-            tags: ['wordpress']
+            tags: ['wordpress', `wordpress-${normalizedLanguage}`]
           },
         },
       },
@@ -86,16 +88,18 @@ export interface TrendingPostsDataType {
 
 export async function getTrendingPostsFromHomePage(lang: string): Promise<TrendingPost[]> {
   try {
+    // Normalize language to lowercase for consistency
+    const normalizedLang = lang.toLowerCase();
     const result = await client.query<TrendingPostsDataType>({
       query: GET_TRENDING_POSTS_FROM_HOME_PAGE,
       variables: {
-        lang,
+        lang: normalizedLang,
       },
       fetchPolicy: "no-cache",
       context: {
         fetchOptions: {
           next: { 
-            tags: ['wordpress']
+            tags: ['wordpress', `wordpress-${normalizedLang}`]
           },
         },
       },
@@ -109,5 +113,132 @@ export async function getTrendingPostsFromHomePage(lang: string): Promise<Trendi
   } catch (error) {
     console.error("Error fetching trending posts:", error);
     return [];
+  }
+}
+
+export interface CategorySectionCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface CategorySectionPost {
+  id: number;
+  title: string;
+  slug: string;
+  featuredImage: string;
+  date: string;
+  readingTime: number;
+}
+
+export interface CategorySectionItem {
+  sectionTitle: string;
+  sectionBackgroundColor: string;
+  viewAllButtonLabel: string;
+  viewAllButtonUrl: string;
+  category: CategorySectionCategory;
+  posts: CategorySectionPost[];
+}
+
+export interface CategorySectionDataType {
+  getCategorySectionData: CategorySectionItem[];
+}
+
+export async function getCategoriesSectionForHomePage(lang: string): Promise<CategorySectionItem[]> {
+  try {
+    // Normalize language to lowercase for consistency
+    const normalizedLang = lang.toLowerCase();
+    const result = await client.query<CategorySectionDataType>({
+      query: GET_CATEGORIES_SECTION_FOR_HOME_PAGE,
+      variables: {
+        lang: normalizedLang,
+      },
+      fetchPolicy: "no-cache",
+      context: {
+        fetchOptions: {
+          next: { 
+            tags: ['wordpress', `wordpress-${normalizedLang}`]
+          },
+        },
+      },
+    });
+
+    if (result.error || !result.data?.getCategorySectionData) {
+      return [];
+    }
+
+    return result.data.getCategorySectionData;
+  } catch (error) {
+    console.error("Error fetching categories section data:", error);
+    return [];
+  }
+}
+
+export interface SpotlightPostCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface SpotlightPost {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage: string;
+  date: string;
+  readingTime: number;
+  author: string;
+  categories: SpotlightPostCategory[];
+}
+
+export interface SpotlightCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface SpotlightData {
+  sectionTitle: string;
+  image: string;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  buttonLink: string;
+  category: SpotlightCategory;
+  posts: SpotlightPost[];
+}
+
+export interface SpotlightDataType {
+  getSpotlightData: SpotlightData;
+}
+
+export async function getSpotlightDataForHomePage(lang: string): Promise<SpotlightData | null> {
+  try {
+    // Normalize language to lowercase for consistency
+    const normalizedLang = lang.toLowerCase();
+    const result = await client.query<SpotlightDataType>({
+      query: GET_SPOTLIGHT_DATA_FOR_HOME_PAGE,
+      variables: {
+        lang: normalizedLang,
+      },
+      fetchPolicy: "no-cache",
+      context: {
+        fetchOptions: {
+          next: { 
+            tags: ['wordpress', `wordpress-${normalizedLang}`]
+          },
+        },
+      },
+    });
+
+    if (result.error || !result.data?.getSpotlightData) {
+      return null;
+    }
+
+    return result.data.getSpotlightData;
+  } catch (error) {
+    console.error("Error fetching spotlight data:", error);
+    return null;
   }
 }
