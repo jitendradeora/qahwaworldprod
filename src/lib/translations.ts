@@ -27,6 +27,8 @@ export function getTranslations(locale: string) {
       searchResults: 'Search Results',
       noResults: 'No results found',
       loadMore: 'Load More',
+      noContentTitle: 'No Content Available',
+      noContentMessage: 'There is no content available for this page at the moment. Please check back later.',
     },
     ar: {
       home: 'الرئيسية',
@@ -54,6 +56,8 @@ export function getTranslations(locale: string) {
       searchResults: 'نتائج البحث',
       noResults: 'لا توجد نتائج',
       loadMore: 'تحميل المزيد',
+      noContentTitle: 'لا يوجد محتوى متاح',
+      noContentMessage: 'لا يوجد محتوى متاح لهذه الصفحة في الوقت الحالي. يرجى المحاولة مرة أخرى لاحقاً.',
     },
     ru: {
       home: 'Главная',
@@ -81,6 +85,8 @@ export function getTranslations(locale: string) {
       searchResults: 'Результаты поиска',
       noResults: 'Ничего не найдено',
       loadMore: 'Загрузить ещё',
+      noContentTitle: 'Контент недоступен',
+      noContentMessage: 'В настоящее время контент для этой страницы недоступен. Пожалуйста, проверьте позже.',
     },
   };
 
