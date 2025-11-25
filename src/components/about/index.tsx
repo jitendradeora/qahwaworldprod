@@ -1,183 +1,222 @@
 import React from 'react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Coffee, Users, Globe, Heart } from 'lucide-react';
+import { getAboutPageData } from '@/lib/actions/about/aboutAction';
 import { getTranslations } from '@/lib/translations';
+
+const decodeHTMLEntities = (text: string | null | undefined = ""): string => {
+  if (!text || text === null || text === undefined) {
+    return "";
+  }
+
+  const entityMap: Record<string, string> = {
+    "&quot;": '"',
+    "&#34;": '"',
+    "&#8220;": '"',
+    "&#8221;": '"',
+    "&#8216;": "'",
+    "&#8217;": "'",
+    "&#39;": "'",
+    "&apos;": "'",
+    "&amp;": "&",
+    "&nbsp;": " ",
+    "&ndash;": "-",
+    "&#8211;": "-",
+    "&mdash;": "-",
+    "&#8212;": "-",
+    "&hellip;": "...",
+    "&#8230;": "...",
+  };
+
+  let decoded = String(text).replace(/&[a-zA-Z0-9#]+;/g, (entity) => entityMap[entity] || entity);
+
+  decoded = decoded
+    .replace(/&#x([\da-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
+
+  return decoded;
+};
+
+// Icon mapping function
+const getIconComponent = (iconClass: string) => {
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    coffee: Coffee,
+    users: Users,
+    globe: Globe,
+    heart: Heart,
+  };
+  return iconMap[iconClass.toLowerCase()] || Coffee;
+};
 
 interface AboutPageProps {
   locale: string;
 }
 
-const AboutPage: React.FC<AboutPageProps> = ({ locale }) => {
-  const content = {
-    en: {
-      hero: 'About Qahwa World',
-      intro: 'Your destination for everything coffee',
-      mission: 'Our Mission',
-      missionText: 'Qahwa World is dedicated to celebrating and exploring the rich culture, history, and community of coffee. We bring together coffee enthusiasts, professionals, and curious minds from around the globe to share stories, insights, and the latest developments in the coffee industry.',
-      vision: 'Our Vision',
-      visionText: 'We envision a world where coffee brings people together, fostering understanding and appreciation across cultures. Through our multilingual platform, we break down language barriers and create a truly global coffee community.',
-      values: 'Our Values',
-      valuesItems: [
-        {
-          icon: Coffee,
-          title: 'Quality & Excellence',
-          description: 'We are committed to delivering high-quality content that educates and inspires coffee lovers everywhere.',
-        },
-        {
-          icon: Users,
-          title: 'Community',
-          description: 'Building connections between coffee professionals, enthusiasts, and everyone in between.',
-        },
-        {
-          icon: Globe,
-          title: 'Global Perspective',
-          description: 'Celebrating coffee culture from every corner of the world through multilingual storytelling.',
-        },
-        {
-          icon: Heart,
-          title: 'Passion',
-          description: 'Driven by a deep love for coffee and the stories behind every cup.',
-        },
-      ],
-    },
-    ar: {
-      hero: 'عن عالم القهوة',
-      intro: 'وجهتك لكل ما يتعلق بالقهوة',
-      mission: 'مهمتنا',
-      missionText: 'يكرس عالم القهوة نفسه للاحتفال واستكشاف الثقافة الغنية والتاريخ ومجتمع القهوة. نجمع عشاق القهوة والمحترفين والعقول الفضولية من جميع أنحاء العالم لمشاركة القصص والرؤى وأحدث التطورات في صناعة القهوة.',
-      vision: 'رؤيتنا',
-      visionText: 'نتصور عالماً تجمع فيه القهوة الناس معاً، وتعزز التفاهم والتقدير عبر الثقافات. من خلال منصتنا متعددة اللغات، نكسر حواجز اللغة ونخلق مجتمع قهوة عالمياً حقيقياً.',
-      values: 'قيمنا',
-      valuesItems: [
-        {
-          icon: Coffee,
-          title: 'الجودة والتميز',
-          description: 'نحن ملتزمون بتقديم محتوى عالي الجودة يثقف ويلهم محبي القهوة في كل مكان.',
-        },
-        {
-          icon: Users,
-          title: 'المجتمع',
-          description: 'بناء الروابط بين محترفي القهوة والمتحمسين والجميع بينهم.',
-        },
-        {
-          icon: Globe,
-          title: 'منظور عالمي',
-          description: 'الاحتفال بثقافة القهوة من كل ركن في العالم من خلال رواية القصص متعددة اللغات.',
-        },
-        {
-          icon: Heart,
-          title: 'الشغف',
-          description: 'مدفوعون بحب عميق للقهوة والقصص وراء كل كوب.',
-        },
-      ],
-    },
-    ru: {
-      hero: 'О Мире Кофе',
-      intro: 'Ваш путеводитель в мире кофе',
-      mission: 'Наша Миссия',
-      missionText: 'Qahwa World посвящен празднованию и исследованию богатой культуры, истории и сообщества кофе. Мы объединяем любителей кофе, профессионалов и любопытные умы со всего мира, чтобы делиться историями, идеями и последними событиями в кофейной индустрии.',
-      vision: 'Наше Видение',
-      visionText: 'Мы представляем мир, где кофе объединяет людей, способствуя пониманию и признанию различных культур. Через нашу многоязычную платформу мы преодолеваем языковые барьеры и создаем действительно глобальное кофейное сообщество.',
-      values: 'Наши Ценности',
-      valuesItems: [
-        {
-          icon: Coffee,
-          title: 'Качество и Совершенство',
-          description: 'Мы стремимся предоставлять высококачественный контент, который обучает и вдохновляет любителей кофе повсюду.',
-        },
-        {
-          icon: Users,
-          title: 'Сообщество',
-          description: 'Создание связей между профессионалами кофе, энтузиастами и всеми, кто между ними.',
-        },
-        {
-          icon: Globe,
-          title: 'Глобальная Перспектива',
-          description: 'Празднование кофейной культуры со всех уголков мира через многоязычное повествование.',
-        },
-        {
-          icon: Heart,
-          title: 'Страсть',
-          description: 'Движимые глубокой любовью к кофе и историям за каждой чашкой.',
-        },
-      ],
-    },
-  };
+const AboutPage: React.FC<AboutPageProps> = async ({ locale }) => {
+  // Get translations
+  const t = getTranslations(locale);
+  
+  // Fetch dynamic data
+  const aboutData = await getAboutPageData(locale);
 
-  const currentContent = content[locale as 'en' | 'ar' | 'ru'] || content.en;
+  // Check if data is null or essentially empty (no meaningful content)
+  const hasContent = aboutData && (
+    aboutData.heroHeading ||
+    aboutData.heroSubHeading ||
+    aboutData.missionHeading ||
+    aboutData.missionDescription ||
+    aboutData.visionHeading ||
+    aboutData.visionDescription ||
+    aboutData.valuesHeading ||
+    (aboutData.values && aboutData.values.length > 0)
+  );
+
+  // Show "no content" message if data is null or empty
+  if (!hasContent) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-amber-50 dark:bg-amber-900/30 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-6 shadow-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-amber-500 dark:text-amber-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100 mb-2">
+                  {t.noContentTitle}
+                </h3>
+                <div className="text-sm text-amber-800 dark:text-amber-200">
+                  <p>{t.noContentMessage}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const heroHeading = decodeHTMLEntities(aboutData.heroHeading);
+  const heroSubHeading = decodeHTMLEntities(aboutData.heroSubHeading);
+  const heroBackgroundColor = aboutData.heroBackgroundColor || '#92400e';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-900 to-amber-700 dark:from-amber-800 dark:to-amber-900 text-white py-20">
+      <section 
+        className="text-white py-20"
+        style={{ backgroundColor: heroBackgroundColor }}
+      >
         <div className="container mx-auto px-4 text-center">
-          <h1 className="mb-4 text-white">{currentContent.hero}</h1>
-          <p className="text-xl text-amber-100 dark:text-amber-200">{currentContent.intro}</p>
+          <h1 className="mb-4 text-white">{heroHeading}</h1>
+          <p className="text-xl text-amber-100 dark:text-amber-200">{heroSubHeading}</p>
         </div>
       </section>
 
       {/* Mission Section */}
-      <section className="py-16 bg-white dark:bg-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="mb-4 text-gray-900 dark:text-gray-100">{currentContent.mission}</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {currentContent.missionText}
-              </p>
-            </div>
-            <div className="h-96 rounded-xl overflow-hidden">
-              <ImageWithFallback
-                src="https://images.unsplash.com/photo-1521017432531-fbd92d768814?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBzaG9wJTIwaW50ZXJpb3J8ZW58MXx8fHwxNzYxNzE5MjY3fDA&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Coffee shop"
-                className="w-full h-full object-cover"
-              />
+      {(aboutData.missionHeading || aboutData.missionDescription || aboutData.missionImage) && (
+        <section className="py-16 bg-white dark:bg-gray-800">
+          <div className="container mx-auto px-4">
+            <div className={`grid gap-12 items-center ${aboutData.missionImage ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+              {(aboutData.missionHeading || aboutData.missionDescription) && (
+                <div>
+                  {aboutData.missionHeading && (
+                    <h2 className="mb-4 text-gray-900 dark:text-gray-100">
+                      {decodeHTMLEntities(aboutData.missionHeading)}
+                    </h2>
+                  )}
+                  {aboutData.missionDescription && (
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                      {decodeHTMLEntities(aboutData.missionDescription)}
+                    </p>
+                  )}
+                </div>
+              )}
+              {aboutData.missionImage && (
+                <div className="h-96 rounded-xl overflow-hidden">
+                  <ImageWithFallback
+                    src={aboutData.missionImage}
+                    alt={decodeHTMLEntities(aboutData.missionHeading) || "Mission"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Vision Section */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-900">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="h-96 rounded-xl overflow-hidden order-2 lg:order-1">
-              <ImageWithFallback
-                src="https://images.unsplash.com/photo-1693734656256-e589d44cbd30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb2ZmZWUlMjBiZWFucyUyMHBsYW50YXRpb258ZW58MXx8fHwxNzYxNzUxMDAzfDA&ixlib=rb-4.1.0&q=80&w=1080"
-                alt="Coffee plantation"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="order-1 lg:order-2">
-              <h2 className="mb-4 text-gray-900 dark:text-gray-100">{currentContent.vision}</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {currentContent.visionText}
-              </p>
+      {(aboutData.visionHeading || aboutData.visionDescription || aboutData.visionImage) && (
+        <section className="py-16 bg-gray-50 dark:bg-gray-900">
+          <div className="container mx-auto px-4">
+            <div className={`grid gap-12 items-center ${aboutData.visionImage ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+              {aboutData.visionImage && (
+                <div className="h-96 rounded-xl overflow-hidden order-2 lg:order-1">
+                  <ImageWithFallback
+                    src={aboutData.visionImage}
+                    alt={decodeHTMLEntities(aboutData.visionHeading) || "Vision"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              {(aboutData.visionHeading || aboutData.visionDescription) && (
+                <div className={aboutData.visionImage ? "order-1 lg:order-2" : ""}>
+                  {aboutData.visionHeading && (
+                    <h2 className="mb-4 text-gray-900 dark:text-gray-100">
+                      {decodeHTMLEntities(aboutData.visionHeading)}
+                    </h2>
+                  )}
+                  {aboutData.visionDescription && (
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                      {decodeHTMLEntities(aboutData.visionDescription)}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Values Section */}
-      <section className="py-16 bg-white dark:bg-gray-800">
-        <div className="container mx-auto px-4">
-          <h2 className="text-center mb-12 text-gray-900 dark:text-gray-100">{currentContent.values}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {currentContent.valuesItems.map((value, index) => {
-              const Icon = value.icon;
-              return (
-                <div key={index} className="text-center p-6 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-amber-50 dark:hover:bg-amber-900 transition-colors">
-                  <div className="w-16 h-16 bg-amber-700 dark:bg-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="mb-3 text-gray-900 dark:text-gray-100">{value.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-400">{value.description}</p>
-                </div>
-              );
-            })}
+      {(aboutData.valuesHeading || (aboutData.values && aboutData.values.length > 0)) && (
+        <section className="py-16 bg-white dark:bg-gray-800">
+          <div className="container mx-auto px-4">
+            {aboutData.valuesHeading && (
+              <h2 className="text-center mb-12 text-gray-900 dark:text-gray-100">
+                {decodeHTMLEntities(aboutData.valuesHeading)}
+              </h2>
+            )}
+            {aboutData.values && aboutData.values.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {aboutData.values.map((value, index) => {
+                  const Icon = getIconComponent(value.iconClass);
+                  return (
+                    <div key={index} className="text-center p-6 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-amber-50 dark:hover:bg-amber-900 transition-colors">
+                      <div className="w-16 h-16 bg-amber-700 dark:bg-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Icon className="w-8 h-8 text-white" />
+                      </div>
+                      {value.heading && (
+                        <h3 className="mb-3 text-gray-900 dark:text-gray-100">
+                          {decodeHTMLEntities(value.heading)}
+                        </h3>
+                      )}
+                      {value.description && (
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {decodeHTMLEntities(value.description)}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 };
