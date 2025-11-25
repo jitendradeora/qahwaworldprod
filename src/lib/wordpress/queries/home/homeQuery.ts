@@ -109,3 +109,12 @@ export const GET_SPOTLIGHT_DATA_FOR_HOME_PAGE = gql`
   }
 }
 `;
+
+export const GET_HOMEPAGE_AD_BANNER = gql`
+  query getHomepageAdBanner {
+    getHomepageAdBanner {
+      name
+      content
+    }
+  }
+`;
