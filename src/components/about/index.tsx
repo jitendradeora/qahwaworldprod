@@ -1,6 +1,7 @@
 import React from 'react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { Coffee, Users, Globe, Heart } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import { Coffee } from 'lucide-react'; // Default fallback
 import { getAboutPageData } from '@/lib/actions/about/aboutAction';
 import { getTranslations } from '@/lib/translations';
 
@@ -37,15 +38,28 @@ const decodeHTMLEntities = (text: string | null | undefined = ""): string => {
   return decoded;
 };
 
-// Icon mapping function
-const getIconComponent = (iconClass: string) => {
-  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    coffee: Coffee,
-    users: Users,
-    globe: Globe,
-    heart: Heart,
-  };
-  return iconMap[iconClass.toLowerCase()] || Coffee;
+// Convert kebab-case or snake_case to PascalCase
+// Examples: "badge-check" -> "BadgeCheck", "file-text" -> "FileText", "user_profile" -> "UserProfile"
+const toPascalCase = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(/[-_\s]+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
+};
+
+// Icon mapping function - dynamically gets icon from lucide-react
+const getIconComponent = (iconClass: string): React.ComponentType<any> => {
+  if (!iconClass) return Coffee;
+  
+  // Convert icon class to PascalCase (e.g., "badge-check" -> "BadgeCheck")
+  const iconName = toPascalCase(iconClass);
+  
+  // Try to get the icon from lucide-react
+  const IconComponent = (LucideIcons as any)[iconName];
+  
+  // Return the icon if found, otherwise return default fallback
+  return IconComponent || Coffee;
 };
 
 interface AboutPageProps {
