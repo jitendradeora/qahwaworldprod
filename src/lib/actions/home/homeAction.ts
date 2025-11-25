@@ -1,5 +1,5 @@
 import client from "@/lib/client/ApolloClient";
-import { GET_HOME_PAGE_LATEST_ARTICLES, GET_TRENDING_POSTS_FROM_HOME_PAGE, GET_CATEGORIES_SECTION_FOR_HOME_PAGE, GET_SPOTLIGHT_DATA_FOR_HOME_PAGE } from "@/lib/wordpress/queries/home/homeQuery";
+import { GET_HOME_PAGE_LATEST_ARTICLES, GET_TRENDING_POSTS_FROM_HOME_PAGE, GET_CATEGORIES_SECTION_FOR_HOME_PAGE, GET_SPOTLIGHT_DATA_FOR_HOME_PAGE, GET_HOMEPAGE_AD_BANNER } from "@/lib/wordpress/queries/home/homeQuery";
 
 export interface FeaturedImage {
   node: {
@@ -240,5 +240,39 @@ export async function getSpotlightDataForHomePage(lang: string): Promise<Spotlig
   } catch (error) {
     console.error("Error fetching spotlight data:", error);
     return null;
+  }
+}
+
+export interface HomepageAdBanner {
+  name: string;
+  content: string;
+}
+
+export interface HomepageAdBannerDataType {
+  getHomepageAdBanner: HomepageAdBanner[];
+}
+
+export async function getHomepageAdBanner(): Promise<HomepageAdBanner[]> {
+  try {
+    const result = await client.query<HomepageAdBannerDataType>({
+      query: GET_HOMEPAGE_AD_BANNER,
+      fetchPolicy: "no-cache",
+      context: {
+        fetchOptions: {
+          next: { 
+            tags: ['wordpress', 'wordpress-ad-banners']
+          },
+        },
+      },
+    });
+
+    if (result.error || !result.data?.getHomepageAdBanner) {
+      return [];
+    }
+
+    return result.data.getHomepageAdBanner;
+  } catch (error) {
+    console.error("Error fetching homepage ad banners:", error);
+    return [];
   }
 }

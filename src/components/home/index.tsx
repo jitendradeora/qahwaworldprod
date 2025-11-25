@@ -7,7 +7,7 @@ import { Badge } from "../ui/badge";
 import { SEO } from "../SEO";
 import { getTranslations, getCategoryTranslation } from "@/lib/translations";
 import { getLocalizedPath } from "@/lib/localization";
-import { getHomePageLatestArticles, getTrendingPostsFromHomePage, getCategoriesSectionForHomePage, getSpotlightDataForHomePage } from "@/lib/actions/home/homeAction";
+import { getHomePageLatestArticles, getTrendingPostsFromHomePage, getCategoriesSectionForHomePage, getSpotlightDataForHomePage, getHomepageAdBanner } from "@/lib/actions/home/homeAction";
 
 const decodeHTMLEntities = (text: string = ""): string => {
   const entityMap: Record<string, string> = {
@@ -68,6 +68,12 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
   const trendingArticles = await getTrendingPostsFromHomePage(locale);
   const categorySections = await getCategoriesSectionForHomePage(locale);
   const spotlightData = await getSpotlightDataForHomePage(locale);
+  const adBanners = await getHomepageAdBanner();
+
+  // Helper function to get ad banner by name
+  const getAdBanner = (name: string) => {
+    return adBanners.find(banner => banner.name === name);
+  };
 
   // Use dynamic data for main content, fallback to mock for other sections
   const featuredArticle = latestArticles.length > 0 ? latestArticles[0] : null;
@@ -89,11 +95,19 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
         <div className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center py-4">
-              <div className="w-full max-w-5xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-3 text-center">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  📰 Advertisement Banner - 728x90
-                </span>
-              </div>
+              {getAdBanner('home_page_ad1') ? (
+                <div 
+                  className="w-full max-w-5xl"
+                  dangerouslySetInnerHTML={{ __html: getAdBanner('home_page_ad1')!.content }}
+                />
+              ) : (
+                <div className="w-full max-w-5xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-3 text-center">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {/* Advertisement Banner 1 */}
+                    📰 Advertisement Banner - 728x90
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -105,7 +119,16 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
               {/* Left Sidebar - Latest Articles */}
               <aside className="lg:col-span-3">
                 <div className="bg-white dark:bg-gray-800 px-6 py-6 sticky top-24">
-                  Advertisement Banner - 300x250
+                  {getAdBanner('home_page_ad2') ? (
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: getAdBanner('home_page_ad2')!.content }}
+                    />
+                  ) : (
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      {/* Advertisement Banner 2 */}
+                      Advertisement Banner - 300x800
+                    </span>
+                  )}
                 </div>
               </aside>
 
@@ -334,11 +357,19 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
         <div className="border-t border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center py-4">
-              <div className="w-full max-w-5xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-3 text-center">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  📰 Advertisement Banner - 728x90
-                </span>
-              </div>
+              {getAdBanner('home_page_ad3') ? (
+                <div 
+                  className="w-full max-w-5xl"
+                  dangerouslySetInnerHTML={{ __html: getAdBanner('home_page_ad3')!.content }}
+                />
+              ) : (
+                <div className="w-full max-w-5xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-3 text-center">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {/* Advertisement Banner 3 */}
+                    📰 Advertisement Banner - 728x90
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -570,19 +601,28 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
                   )}
 
                   {/* MPU Ad Unit (300x250) */}
-                  <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-6 mb-6">
-                    <div className="flex flex-col items-center justify-center h-64 text-center">
-                      <div className="w-16 h-16 bg-amber-200 dark:bg-amber-700 mb-4 flex items-center justify-center">
-                        <span className="text-2xl">📢</span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                        Advertisement
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        MPU 300x250
-                      </p>
+                  {getAdBanner('home_page_ad4') ? (
+                    <div className="mb-6">
+                      <div 
+                        dangerouslySetInnerHTML={{ __html: getAdBanner('home_page_ad4')!.content }}
+                      />
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-6 mb-6">
+                      <div className="flex flex-col items-center justify-center h-64 text-center">
+                        <div className="w-16 h-16 bg-amber-200 dark:bg-amber-700 mb-4 flex items-center justify-center">
+                          <span className="text-2xl">📢</span>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                          {/* Advertisement Banner 4 */}
+                          Advertisement Banner - 300x250
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          MPU 300x250
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </aside>
 
@@ -691,11 +731,19 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
         <div className="border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center py-4">
-              <div className="w-full max-w-5xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-3 text-center">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  📰 Advertisement Banner - 728x90
-                </span>
-              </div>
+              {getAdBanner('home_page_ad5') ? (
+                <div 
+                  className="w-full max-w-5xl"
+                  dangerouslySetInnerHTML={{ __html: getAdBanner('home_page_ad5')!.content }}
+                />
+              ) : (
+                <div className="w-full max-w-5xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-3 text-center">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {/* Advertisement Banner 5 */}
+                    📰 Advertisement Banner - 728x90
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
