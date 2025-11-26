@@ -14,13 +14,13 @@ interface ArticleGridProps {
 
 export const ArticleGrid: React.FC<ArticleGridProps> = ({ articles, locale }) => {
   const getPath = (path: string) => getLocalizedPath(path, locale);
-  
+
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
       {articles.map((article) => (
         <Link
           key={article.id}
-          href={`/${locale}/article/${article.id}`}
+          href={getPath(`/article/${article.id}`)}
           className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all"
         >
           <div className="aspect-video relative overflow-hidden">

@@ -1,25 +1,19 @@
+'use client';
+
 import React from 'react';
-import { HeaderMenuData } from "@/lib/actions/site/headerMenuAction";
+import { Category } from "@/lib/actions/site/headerMenuAction";
 import { HeaderInteractive } from "./header/HeaderInteractive";
 
 interface HeaderProps {
   locale?: string;
   language?: string;
+  menuData: {
+    en: Category[];
+    ar: Category[];
+    ru: Category[];
+  };
 }
 
-export const Header: React.FC<HeaderProps> = async ({ locale = 'en', language = 'en' }) => {
-  // Fetch menu data for all languages on server side
-  const [enMenuItems, arMenuItems, ruMenuItems] = await Promise.all([
-    HeaderMenuData('en'),
-    HeaderMenuData('ar'),
-    HeaderMenuData('ru'),
-  ]);
-
-  const menuData = {
-    en: enMenuItems,
-    ar: arMenuItems,
-    ru: ruMenuItems,
-  };
-
+export const Header: React.FC<HeaderProps> = ({ locale = 'en', language = 'en', menuData }) => {
   return <HeaderInteractive menuData={menuData} locale={locale} />;
 };

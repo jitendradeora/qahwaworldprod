@@ -7,14 +7,14 @@ export function HtmlAttributes() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Detect language from pathname
+    // Detect language from pathname - check for complete path segments
     let lang = 'en';
     let dir: 'ltr' | 'rtl' = 'ltr';
 
-    if (pathname.startsWith('/ar')) {
+    if (pathname === '/ar' || pathname.startsWith('/ar/')) {
       lang = 'ar';
       dir = 'rtl';
-    } else if (pathname.startsWith('/ru')) {
+    } else if (pathname === '/ru' || pathname.startsWith('/ru/')) {
       lang = 'ru';
       dir = 'ltr';
     }

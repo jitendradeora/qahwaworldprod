@@ -14,10 +14,10 @@ interface SearchContentProps {
   categories: string[];
 }
 
-export const SearchContent: React.FC<SearchContentProps> = ({ 
-  initialResults, 
+export const SearchContent: React.FC<SearchContentProps> = ({
+  initialResults,
   locale,
-  categories 
+  categories
 }) => {
   const getPath = (path: string) => getLocalizedPath(path, locale);
   const [results, setResults] = useState<Article[]>(initialResults);
@@ -58,7 +58,7 @@ export const SearchContent: React.FC<SearchContentProps> = ({
           {results.map((article) => (
             <Link
               key={article.id}
-              href={`/${locale}/article/${article.id}`}
+              href={getPath(`/article/${article.id}`)}
               className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all"
             >
               <div className="aspect-video relative overflow-hidden">
@@ -90,7 +90,7 @@ export const SearchContent: React.FC<SearchContentProps> = ({
                     {article.tags.slice(0, 3).map((tag) => (
                       <Link
                         key={tag}
-                        href={`/${locale}/tag/${tag}`}
+                        href={getPath(`/tag/${tag}`)}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Badge variant="outline" className="text-xs hover:bg-accent">
