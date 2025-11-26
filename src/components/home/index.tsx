@@ -4,7 +4,6 @@ import { mockArticles } from "../../data/mockArticles";
 import { ArticleCard } from "../ArticleCard";
 import { ArrowRight, Clock } from "lucide-react";
 import { Badge } from "../ui/badge";
-import { SEO } from "../SEO";
 import { getTranslations, getCategoryTranslation } from "@/lib/translations";
 import { getLocalizedPath } from "@/lib/localization";
 import { getHomePageLatestArticles, getTrendingPostsFromHomePage, getCategoriesSectionForHomePage, getSpotlightDataForHomePage, getHomepageAdBanner } from "@/lib/actions/home/homeAction";
@@ -84,12 +83,6 @@ const HomePage: React.FC<HomePageProps> = async ({ locale }) => {
 
   return (
     <>
-      <SEO
-        title="Qahwa World - Explore Coffee Culture & News"
-        description="Discover the latest coffee news, brewing techniques, coffee communities, expert interviews, and cultural reflections on Qahwa World."
-        keywords="coffee, qahwa, coffee news, brewing, coffee culture, barista, coffee community, coffee articles"
-        ogImage="https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=1200&h=630&fit=crop"
-      />
       <div className="min-h-screen bg-white dark:bg-gray-900">
         {/* Top Banner Ad - Under Navigation */}
         <div className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
