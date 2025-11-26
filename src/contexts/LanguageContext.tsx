@@ -165,11 +165,16 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider: React.FC<{ children: ReactNode; initialLanguage?: Language }> = ({ 
-  children, 
-  initialLanguage = 'en' 
+export const LanguageProvider: React.FC<{ children: ReactNode; initialLanguage?: Language }> = ({
+  children,
+  initialLanguage = 'en'
 }) => {
   const [language, setLanguage] = useState<Language>(initialLanguage);
+
+  // Sync language state with initialLanguage prop when it changes (e.g., on navigation)
+  useEffect(() => {
+    setLanguage(initialLanguage);
+  }, [initialLanguage]);
 
   // Note: Document lang and dir attributes are handled by the layout files
   // to prevent hydration mismatches. We only manage the language state here.

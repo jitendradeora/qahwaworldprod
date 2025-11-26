@@ -14,13 +14,13 @@ interface ArticleListProps {
 
 export const ArticleList: React.FC<ArticleListProps> = ({ articles, locale }) => {
   const getPath = (path: string) => getLocalizedPath(path, locale);
-  
+
   return (
     <div className="space-y-6">
       {articles.map((article) => (
         <Link
           key={article.id}
-          href={`/${locale}/article/${article.id}`}
+          href={getPath(`/article/${article.id}`)}
           className="group flex gap-6 bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all"
         >
           <div className="w-80 h-48 relative overflow-hidden flex-shrink-0">

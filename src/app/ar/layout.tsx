@@ -1,9 +1,6 @@
-import { LanguageProvider } from '@/contexts/LanguageContext';
-import { Language } from '@/types';
-
 export const metadata = {
-  title: 'Qahwa World - Coffee Culture & News',
-  description: 'Discover the latest coffee news, brewing techniques, and stories from around the world.',
+  title: 'عالم القهوة - ثقافة وأخبار القهوة',
+  description: 'اكتشف أحدث أخبار القهوة وتقنيات التحضير والقصص من جميع أنحاء العالم.',
 };
 
 export default function ArLayout({
@@ -11,11 +8,5 @@ export default function ArLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const lang = 'ar' as Language;
-  
-  return (
-    <LanguageProvider initialLanguage={lang}>
-      {children}
-    </LanguageProvider>
-  );
+  return <>{children}</>;
 }

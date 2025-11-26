@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LocaleWrapper } from '@/components/LocaleWrapper';
-import { Header } from '@/components/Header';
 import { HtmlAttributes } from '@/components/HtmlAttributes';
+import { HeaderMenuData } from '@/lib/actions/site/headerMenuAction';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -10,17 +10,30 @@ export const metadata: Metadata = {
   description: 'Discover the latest coffee news, brewing techniques, and stories from around the world.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Fetch menu data for all languages on server side
+  const [enMenuItems, arMenuItems, ruMenuItems] = await Promise.all([
+    HeaderMenuData('en'),
+    HeaderMenuData('ar'),
+    HeaderMenuData('ru'),
+  ]);
+
+  const menuData = {
+    en: enMenuItems,
+    ar: arMenuItems,
+    ru: ruMenuItems,
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <HtmlAttributes />
         <ThemeProvider>
-          <LocaleWrapper header={<Header locale="en" language="en" />}>
+          <LocaleWrapper menuData={menuData}>
             {children}
           </LocaleWrapper>
         </ThemeProvider>

@@ -67,21 +67,25 @@ export const HeaderInteractive: React.FC<HeaderInteractiveProps> = ({ menuData, 
   }, []);
 
   const handleLanguageChange = (newLang: Language) => {
-    setLanguage(newLang);
-    
-    // Remove current locale from pathname
+    // Don't manually set language - it will update automatically via pathname
+
+    // Remove current locale from pathname - check for complete path segments
     let pathWithoutLocale = pathname;
-    if (pathname.startsWith('/ar') || pathname.startsWith('/ru')) {
-      pathWithoutLocale = pathname.replace(/^\/(ar|ru)/, '') || '/';
+    if (pathname === '/ar' || pathname.startsWith('/ar/')) {
+      pathWithoutLocale = pathname.substring(3) || '/';
+    } else if (pathname === '/ru' || pathname.startsWith('/ru/')) {
+      pathWithoutLocale = pathname.substring(3) || '/';
     }
-    
-    // If switching to English, go to root path (no locale prefix)
+
+    // Build new path
+    let newPath: string;
     if (newLang === 'en') {
-      router.push(pathWithoutLocale);
+      newPath = pathWithoutLocale;
     } else {
-      // For AR/RU, add locale prefix
-      router.push(`/${newLang}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`);
+      newPath = `/${newLang}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
     }
+
+    router.push(newPath);
   };
 
   const getPath = (path: string) => getLocalizedPath(path, locale);
@@ -89,16 +93,14 @@ export const HeaderInteractive: React.FC<HeaderInteractiveProps> = ({ menuData, 
   return (
     <header
       ref={headerRef}
-      className={`bg-white dark:bg-gray-900 border-b dark:border-gray-700 ${
-        isScrolled ? "fixed" : "sticky"
-      } top-0 left-0 right-0 z-40 shadow-sm will-change-transform transition-all duration-300`}
+      className={`bg-white dark:bg-gray-900 border-b dark:border-gray-700 ${isScrolled ? "fixed" : "sticky"
+        } top-0 left-0 right-0 z-40 shadow-sm will-change-transform transition-all duration-300`}
     >
       <div className="container mx-auto px-4">
         {/* Desktop Header */}
         <div
-          className={`hidden lg:grid grid-cols-3 items-center gap-4 overflow-hidden transition-[height,padding] duration-300 ease-in-out will-change-[height] ${
-            isScrolled ? "h-0 py-0" : "h-20 py-4"
-          }`}
+          className={`hidden lg:grid grid-cols-3 items-center gap-4 overflow-hidden transition-[height,padding] duration-300 ease-in-out will-change-[height] ${isScrolled ? "h-0 py-0" : "h-20 py-4"
+            }`}
         >
           {/* Left: Social Icons */}
           <div className="flex items-center gap-3">
@@ -200,23 +202,21 @@ export const HeaderInteractive: React.FC<HeaderInteractiveProps> = ({ menuData, 
 
         {/* Desktop Navigation Row */}
         <nav
-          className={`hidden lg:flex items-center gap-1 transition-all duration-300 ease-in-out border-t dark:border-gray-700 will-change-[padding] ${
-            isScrolled ? "justify-start py-2" : "justify-center py-3"
-          }`}
+          className={`hidden lg:flex items-center gap-1 transition-all duration-300 ease-in-out border-t dark:border-gray-700 will-change-[padding] ${isScrolled ? "justify-start py-2" : "justify-center py-3"
+            }`}
         >
           {/* Small Logo on Scroll */}
           <Link
             href={getPath('/')}
-            className={`flex items-center gap-2 cursor-pointer group mr-6 transition-all duration-300 ease-in-out will-change-[opacity,width,transform] ${
-              isScrolled
+            className={`flex items-center gap-2 cursor-pointer group mr-6 transition-all duration-300 ease-in-out will-change-[opacity,width,transform] ${isScrolled
                 ? "opacity-100 visible w-auto translate-x-0"
                 : "opacity-0 invisible w-0 -translate-x-2"
-            }`}
+              }`}
           >
             <img src="/images/qw-icon.svg" alt="Qahwa World Logo" className="h-10" />
           </Link>
           <NavigationMenu menuItems={menuItems} locale={locale} isScrolled={false} />
-          
+
           {/* Theme Toggle */}
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

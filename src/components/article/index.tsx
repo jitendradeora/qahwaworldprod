@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { getLocalizedPath } from '@/lib/localization';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { mockArticles } from "../../data/mockArticles";
@@ -57,20 +57,28 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
   articleId,
 }) => {
   const { t, language } = useLanguage();
-  const params = useParams() as { locale?: string };
-  const locale = params?.locale || 'en';
+  const pathname = usePathname();
+
+  // Detect locale from pathname - check for complete path segments
+  let locale = 'en';
+  if (pathname === '/ar' || pathname.startsWith('/ar/')) {
+    locale = 'ar';
+  } else if (pathname === '/ru' || pathname.startsWith('/ru/')) {
+    locale = 'ru';
+  }
+
   const getPath = (path: string) => getLocalizedPath(path, locale);
-  
+
   // Find the article immediately, not in useEffect
   const foundArticle = mockArticles.find((a) => a.id === articleId) || null;
-  
+
   // Get related articles from the same category
   const related = foundArticle
     ? mockArticles
-        .filter(
-          (a) => a.id !== articleId && a.category === foundArticle.category
-        )
-        .slice(0, 5)
+      .filter(
+        (a) => a.id !== articleId && a.category === foundArticle.category
+      )
+      .slice(0, 5)
     : [];
 
   const [article] = useState<Article | null>(foundArticle);
@@ -388,38 +396,38 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                             {language === "ar"
                               ? "كاتب"
                               : language === "ru"
-                              ? "Писатель"
-                              : "Writer"}
+                                ? "Писатель"
+                                : "Writer"}
                           </Badge>
                         </div>
                         <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2 md:mb-3">
                           {language === "ar"
                             ? `صحفي متخصص في ${getCategoryTranslation(
-                                article.category,
-                                "ar"
-                              )}، يمتلك خبرة واسعة في تغطية الأحداث والتطورات في هذا المجال.`
+                              article.category,
+                              "ar"
+                            )}، يمتلك خبرة واسعة في تغطية الأحداث والتطورات في هذا المجال.`
                             : language === "ru"
-                            ? `Журналист, специализирующийся на ${getCategoryTranslation(
+                              ? `Журналист, специализирующийся на ${getCategoryTranslation(
                                 article.category,
                                 "ru"
                               )}, с обширным опытом освещения событий и развития в этой области.`
-                            : `A journalist specializing in ${article.category}, with extensive experience covering events and developments in this field.`}
+                              : `A journalist specializing in ${article.category}, with extensive experience covering events and developments in this field.`}
                         </p>
                         <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-500 dark:text-gray-400">
                           <span>
                             {language === "ar"
                               ? "45 مقالاً"
                               : language === "ru"
-                              ? "45 статей"
-                              : "45 articles"}
+                                ? "45 статей"
+                                : "45 articles"}
                           </span>
                           <span>•</span>
                           <span className="text-[#c90000] group-hover:underline">
                             {language === "ar"
                               ? "عرض المقالات ←"
                               : language === "ru"
-                              ? "Просмотреть статьи ←"
-                              : "View Articles ←"}
+                                ? "Просмотреть статьи ←"
+                                : "View Articles ←"}
                           </span>
                         </div>
                       </div>
@@ -546,11 +554,10 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`aspect-video overflow-hidden transition-opacity ${
-                      index === selectedImageIndex
-                        ? "ring-2 ring-amber-500"
-                        : "opacity-60 hover:opacity-100"
-                    }`}
+                    className={`aspect-video overflow-hidden transition-opacity ${index === selectedImageIndex
+                      ? "ring-2 ring-amber-500"
+                      : "opacity-60 hover:opacity-100"
+                      }`}
                   >
                     <img
                       src={img}

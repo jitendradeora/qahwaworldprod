@@ -1,9 +1,6 @@
-import { LanguageProvider } from '@/contexts/LanguageContext';
-import { Language } from '@/types';
-
 export const metadata = {
-  title: 'Qahwa World - Coffee Culture & News',
-  description: 'Discover the latest coffee news, brewing techniques, and stories from around the world.',
+  title: 'Мир Кахвы - Кофейная культура и новости',
+  description: 'Откройте для себя последние новости о кофе, методы приготовления и истории со всего мира.',
 };
 
 export default function RuLayout({
@@ -11,11 +8,5 @@ export default function RuLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const lang = 'ru' as Language;
-  
-  return (
-    <LanguageProvider initialLanguage={lang}>
-      {children}
-    </LanguageProvider>
-  );
+  return <>{children}</>;
 }
