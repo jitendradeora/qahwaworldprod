@@ -7,15 +7,24 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { ContactPageData } from '@/lib/actions/contact/contactAction';
+import { submitContactFormAction } from '@/lib/actions/contact/submitContactForm';
 
-const ContactPage: React.FC = () => {
-  const { language } = useLanguage();
+interface ContactPageProps {
+  contactData: ContactPageData | null;
+  language: string;
+}
+
+const ContactPage: React.FC<ContactPageProps> = ({ contactData, language: initialLanguage }) => {
+  const { language: contextLanguage } = useLanguage();
+  const language = contextLanguage || initialLanguage;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const content = {
     en: {
@@ -27,6 +36,11 @@ const ContactPage: React.FC = () => {
       messagePlaceholder: 'Your Message',
       sendButton: 'Send Message',
       successMessage: 'Message sent successfully!',
+      successDescription: 'Thank you for your message. We will get back to you soon.',
+      errorMessage: 'Failed to send message',
+      errorDescription: 'Please check the entered data and try again.',
+      connectionError: 'A connection error occurred. Please check your internet connection and try again.',
+      formNotConfigured: 'Contact form is not configured. Please contact us directly.',
       info: 'Contact Information',
       email: 'Email',
       phone: 'Phone',
@@ -42,6 +56,11 @@ const ContactPage: React.FC = () => {
       messagePlaceholder: 'رسالت��',
       sendButton: 'إرسال الرسالة',
       successMessage: 'تم إرسال الرسالة بنجاح!',
+      successDescription: 'شكراً لرسالتك. سنرد عليك في أقرب وقت ممكن.',
+      errorMessage: 'فشل إرسال الرسالة',
+      errorDescription: 'يرجى التحقق من البيانات المدخلة والمحاولة مرة أخرى.',
+      connectionError: 'حدث خطأ في الاتصال. تأكد من اتصالك بالإنترنت وحاول مرة أخرى.',
+      formNotConfigured: 'نموذج الاتصال غير مُعد. يرجى الاتصال بنا مباشرة.',
       info: 'معلومات الاتصال',
       email: 'البريد الإلكتروني',
       phone: 'الهاتف',
@@ -57,6 +76,11 @@ const ContactPage: React.FC = () => {
       messagePlaceholder: 'Ваше сообщение',
       sendButton: 'Отправить сообщение',
       successMessage: 'Сообщение успешно отправлено!',
+      successDescription: 'Спасибо за ваше сообщение. Мы свяжемся с вами в ближайшее время.',
+      errorMessage: 'Не удалось отправить сообщение',
+      errorDescription: 'Пожалуйста, проверьте введенные данные и попробуйте снова.',
+      connectionError: 'Произошла ошибка подключения. Проверьте подключение к интернету и попробуйте снова.',
+      formNotConfigured: 'Контактная форма не настроена. Пожалуйста, свяжитесь с нами напрямую.',
       info: 'Контактная информация',
       email: 'Email',
       phone: 'Телефон',
@@ -65,13 +89,72 @@ const ContactPage: React.FC = () => {
     },
   };
 
-  const currentContent = content[language];
+  const currentContent = content[language as keyof typeof content] || content.en;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Use dynamic data from WordPress if available, otherwise use fallback
+  const contactInfo = contactData ? {
+    heading: contactData.contactBlockHeading,
+    emailLabel: contactData.emailLabel,
+    email: contactData.emailAddress,
+    phoneLabel: contactData.phoneLabel,
+    phone: contactData.phoneNumber,
+    addressLabel: contactData.addressLabel,
+    address: contactData.address,
+    description: contactData.description,
+    formId: contactData.formId,
+  } : {
+    heading: currentContent.info,
+    emailLabel: currentContent.email,
+    email: 'info@qahwaworld.com',
+    phoneLabel: currentContent.phone,
+    phone: '+1 (555) 123-4567',
+    addressLabel: currentContent.address,
+    address: currentContent.addressText,
+    description: language === 'ar'
+      ? 'نحن هنا لمساعدتك! لا تتردد في التواصل معنا بأي أسئلة أو اقتراحات.'
+      : language === 'ru'
+      ? 'Мы здесь, чтобы помочь! Не стесняйтесь обращаться к нам с любыми вопросами или предложениями.'
+      : "We're here to help! Feel free to reach out with any questions or suggestions.",
+    formId: '',
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate form submission
-    toast.success(currentContent.successMessage);
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    
+    if (!contactInfo.formId) {
+      toast.error(currentContent.formNotConfigured);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await submitContactFormAction({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        formId: contactInfo.formId,
+      });
+
+      if (result.success) {
+        toast.success(currentContent.successMessage, {
+          description: currentContent.successDescription,
+        });
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        toast.error(currentContent.errorMessage, {
+          description: currentContent.errorDescription,
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error(currentContent.errorMessage, {
+        description: currentContent.connectionError,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -139,18 +222,24 @@ const ContactPage: React.FC = () => {
                     placeholder={currentContent.messagePlaceholder}
                     value={formData.message}
                     onChange={handleChange}
-                    required
                     rows={6}
                     className="w-full resize-none"
                   />
                 </div>
                 <Button 
                   type="submit" 
+                  disabled={isSubmitting}
                   className="bg-amber-700 hover:bg-amber-800 w-full md:w-auto"
                   size="lg"
                 >
-                  <Send className="w-4 h-4 mr-2" />
-                  {currentContent.sendButton}
+                  {isSubmitting ? (
+                    'Sending...'
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      {currentContent.sendButton}
+                    </>
+                  )}
                 </Button>
               </form>
             </div>
@@ -158,15 +247,15 @@ const ContactPage: React.FC = () => {
             {/* Contact Information */}
             <div className="space-y-6">
               <div className="bg-white dark:bg-gray-800 rounded-xl p-8">
-                <h3 className="mb-6 text-gray-900 dark:text-gray-100">{currentContent.info}</h3>
+                <h3 className="mb-6 text-gray-900 dark:text-gray-100">{contactInfo.heading}</h3>
                 <div className="space-y-4">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Mail className="w-5 h-5 text-amber-700 dark:text-amber-300" />
                     </div>
                     <div>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">{currentContent.email}</p>
-                      <p className="text-gray-900 dark:text-gray-100">info@qahwaworld.com</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">{contactInfo.emailLabel}</p>
+                      <p className="text-gray-900 dark:text-gray-100">{contactInfo.email}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -174,8 +263,8 @@ const ContactPage: React.FC = () => {
                       <Phone className="w-5 h-5 text-amber-700 dark:text-amber-300" />
                     </div>
                     <div>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">{currentContent.phone}</p>
-                      <p className="text-gray-900 dark:text-gray-100">+1 (555) 123-4567</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">{contactInfo.phoneLabel}</p>
+                      <p className="text-gray-900 dark:text-gray-100">{contactInfo.phone}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -183,8 +272,8 @@ const ContactPage: React.FC = () => {
                       <MapPin className="w-5 h-5 text-amber-700 dark:text-amber-300" />
                     </div>
                     <div>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">{currentContent.address}</p>
-                      <p className="text-gray-900 dark:text-gray-100">{currentContent.addressText}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">{contactInfo.addressLabel}</p>
+                      <p className="text-gray-900 dark:text-gray-100">{contactInfo.address}</p>
                     </div>
                   </div>
                 </div>
@@ -192,11 +281,7 @@ const ContactPage: React.FC = () => {
 
               <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-6 border border-amber-200 dark:border-amber-800">
                 <p className="text-gray-700 dark:text-gray-300">
-                  {language === 'ar'
-                    ? 'نحن هنا لمساعدتك! لا تتردد في التواصل معنا بأي أسئلة أو اقتراحات.'
-                    : language === 'ru'
-                    ? 'Мы здесь, чтобы помочь! Не стесняйтесь обращаться к нам с любыми вопросами или предложениями.'
-                    : "We're here to help! Feel free to reach out with any questions or suggestions."}
+                  {contactInfo.description}
                 </p>
               </div>
             </div>
