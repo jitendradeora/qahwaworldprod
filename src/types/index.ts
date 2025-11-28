@@ -12,13 +12,14 @@ export interface Article {
   featured?: boolean;
   tags?: string[];
   content?: string;
+  slug?: string;
 }
 
 export interface Translation {
   // Header
   search: string;
   subscribe: string;
-  
+
   // Navigation
   news: string;
   coffeeWorld: string;
@@ -31,17 +32,17 @@ export interface Translation {
   coffeeCultureUAE: string;
   faq: string;
   folktaleStories: string;
-  
+
   // Sections
   latestArticles: string;
   trending: string;
   spotlight: string;
-  
+
   // Pages
   aboutUs: string;
   privacyPolicy: string;
   contactUs: string;
-  
+
   // Footer
   categories: string;
   pages: string;
@@ -65,7 +66,7 @@ export interface Translation {
   ourTeam: string;
   termsOfUse: string;
   cookiePolicy: string;
-  
+
   // Common
   readMore: string;
   viewAll: string;

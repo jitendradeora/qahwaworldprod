@@ -161,6 +161,8 @@ interface LanguageContextType {
   setLanguage: (lang: Language) => void;
   t: Translation;
   dir: 'ltr' | 'rtl';
+  alternatePaths: Record<string, string>;
+  setAlternatePaths: (paths: Record<string, string>) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -170,6 +172,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode; initialLanguage?:
   initialLanguage = 'en'
 }) => {
   const [language, setLanguage] = useState<Language>(initialLanguage);
+  const [alternatePaths, setAlternatePaths] = useState<Record<string, string>>({});
 
   // Sync language state with initialLanguage prop when it changes (e.g., on navigation)
   useEffect(() => {
@@ -184,6 +187,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode; initialLanguage?:
     setLanguage,
     t: translations[language],
     dir: language === 'ar' ? 'rtl' : 'ltr',
+    alternatePaths,
+    setAlternatePaths,
   };
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

@@ -17,6 +17,12 @@ export interface Article {
       };
     };
   };
+  categories?: {
+    nodes: Category[];
+  };
+  tags?: {
+    nodes: Tag[];
+  };
   coffeeCategories?: {
     nodes: Category[];
   };
@@ -51,6 +57,10 @@ export interface Category {
   slug: string;
   count?: number;
   description?: string;
+  translations?: {
+    slug: string;
+    languageCode: string;
+  }[];
 }
 
 export interface Tag {
