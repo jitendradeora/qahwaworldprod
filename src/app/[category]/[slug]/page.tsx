@@ -63,6 +63,8 @@ export default async function Page({ params, searchParams, locale = 'en' }: Prop
         readTime: calculateReadTime(articleData.content),
         tags: articleData.tags.nodes.map(tag => tag.name),
         slug: articleData.slug,
+        galleryImages: articleData.postAdvancePost?.galleryImages?.nodes || [],
+        contentAfterGallery: articleData.postAdvancePost?.contentAfterGallery,
     };
 
     return (

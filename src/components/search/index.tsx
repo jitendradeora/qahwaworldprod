@@ -1,39 +1,50 @@
 import React from 'react';
 import Link from 'next/link';
 import { getLocalizedPath } from '@/lib/localization';
-import { mockArticles } from '../../data/mockArticles';
 import { ChevronRight } from 'lucide-react';
 import { SEO } from '../SEO';
 import { SearchContent } from './SearchContent';
 import { getTranslations } from '@/lib/translations';
+import { searchArticles } from '@/lib/actions/blog/searchActions';
+import { Article } from '@/types';
+import { stripHtml, calculateReadTime, formatDate } from '@/lib/utils';
 
 interface SearchResultsPageProps {
   query?: string;
   locale: string;
 }
 
-const SearchResultsPage: React.FC<SearchResultsPageProps> = ({ query = '', locale }) => {
+const SearchResultsPage = async ({ query = '', locale }: SearchResultsPageProps) => {
   const t = getTranslations(locale);
   const getPath = (path: string) => getLocalizedPath(path, locale);
   
-  // Perform search on server
-  const performSearch = (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      return [];
-    }
-
-    const lowerQuery = searchQuery.toLowerCase();
-    return mockArticles.filter(article => {
-      return (
-        article.title.toLowerCase().includes(lowerQuery) ||
-        article.excerpt.toLowerCase().includes(lowerQuery) ||
-        article.content?.toLowerCase().includes(lowerQuery) ||
-        article.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))
-      );
+  // Fetch search results from WordPress
+  let results: Article[] = [];
+  let searchResult;
+  
+  if (query && query.trim()) {
+    searchResult = await searchArticles(query.trim(), 50, undefined, locale);
+    
+    // Transform WordPress data to Article format
+    results = searchResult.articles.map((article) => {
+      const primaryCategory = article.categories.nodes[0];
+      return {
+        id: article.id,
+        title: article.title,
+        excerpt: article.excerpt,
+        content: article.content,
+        image: article.featuredImage?.node.sourceUrl || '/images/placeholder.jpg',
+        category: primaryCategory?.name || 'Uncategorized',
+        categorySlug: primaryCategory?.slug || 'uncategorized',
+        author: article.author.node.name,
+        date: formatDate(article.date, locale),
+        readTime: calculateReadTime(article.content),
+        tags: article.tags.nodes.map(tag => tag.name),
+        slug: article.slug,
+      };
     });
-  };
+  }
 
-  const results = performSearch(query);
   const categories = ['All', 'News', 'Coffee Community', 'Studies', 'Interview', 'Coffee Reflections'];
 
   return (

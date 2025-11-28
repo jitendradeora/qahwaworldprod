@@ -5,6 +5,7 @@ export interface Article {
   title: string;
   excerpt: string;
   category: string;
+  categorySlug?: string;
   image: string;
   date: string;
   author: string;
@@ -13,6 +14,11 @@ export interface Article {
   tags?: string[];
   content?: string;
   slug?: string;
+  galleryImages?: Array<{
+    altText: string;
+    sourceUrl: string;
+  }>;
+  contentAfterGallery?: string;
 }
 
 export interface Translation {
