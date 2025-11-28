@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { stripHtml } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getLocalizedPath } from '@/lib/localization';
@@ -50,38 +51,27 @@ const getCategoryTranslation = (
 };
 
 interface ArticleDetailPageProps {
-  articleId: string;
+  article: Article;
+  locale: string;
 }
 
 const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
-  articleId,
+  article: initialArticle,
+  locale,
 }) => {
   const { t, language } = useLanguage();
   const pathname = usePathname();
 
-  // Detect locale from pathname - check for complete path segments
-  let locale = 'en';
-  if (pathname === '/ar' || pathname.startsWith('/ar/')) {
-    locale = 'ar';
-  } else if (pathname === '/ru' || pathname.startsWith('/ru/')) {
-    locale = 'ru';
-  }
-
   const getPath = (path: string) => getLocalizedPath(path, locale);
 
-  // Find the article immediately, not in useEffect
-  const foundArticle = mockArticles.find((a) => a.id === articleId) || null;
+  // Get related articles from the same category (using mock data for now)
+  const related = mockArticles
+    .filter(
+      (a) => a.id !== initialArticle.id && a.category === initialArticle.category
+    )
+    .slice(0, 5);
 
-  // Get related articles from the same category
-  const related = foundArticle
-    ? mockArticles
-      .filter(
-        (a) => a.id !== articleId && a.category === foundArticle.category
-      )
-      .slice(0, 5)
-    : [];
-
-  const [article] = useState<Article | null>(foundArticle);
+  const [article] = useState<Article | null>(initialArticle);
   const [relatedArticles] = useState<Article[]>(related);
   const [loadedArticles, setLoadedArticles] = useState<Article[]>(related.slice(0, 1));
   const [articlesCount, setArticlesCount] = useState(1);
@@ -293,25 +283,12 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 
                 {/* Article Content */}
                 <div className="prose prose-lg max-w-none mb-8 text-gray-700 dark:text-gray-300">
-                  <p>{article.excerpt}</p>
-                  <p>
-                    Coffee culture represents a rich tapestry of traditions,
-                    innovations, and social connections that span across
-                    continents and centuries. From the ancient coffee ceremonies
-                    of Ethiopia to the modern specialty coffee movements in
-                    urban centers worldwide, coffee has always been more than
-                    just a beverage—it's a catalyst for conversation,
-                    creativity, and community.
-                  </p>
-                  <p>
-                    Coffee culture represents a rich tapestry of traditions,
-                    innovations, and social connections that span across
-                    continents and centuries. From the ancient coffee ceremonies
-                    of Ethiopia to the modern specialty coffee movements in
-                    urban centers worldwide, coffee has always been more than
-                    just a beverage—it's a catalyst for conversation,
-                    creativity, and community.
-                  </p>
+                  {/* Only render excerpt as plain text, not HTML */}
+                  {article.excerpt && <p>{stripHtml(article.excerpt)}</p>}
+                  {/* Render content as HTML */}
+                  {article.content && (
+                    <div dangerouslySetInnerHTML={{ __html: article.content }} />
+                  )}
 
                   {/* Gallery Section */}
                   <div className="my-8">

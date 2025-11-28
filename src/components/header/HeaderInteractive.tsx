@@ -38,7 +38,7 @@ interface HeaderInteractiveProps {
 }
 
 export const HeaderInteractive: React.FC<HeaderInteractiveProps> = ({ menuData, locale }) => {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, t, alternatePaths } = useLanguage();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -67,6 +67,12 @@ export const HeaderInteractive: React.FC<HeaderInteractiveProps> = ({ menuData, 
   }, []);
 
   const handleLanguageChange = (newLang: Language) => {
+    // Check if there is an alternate path for the new language (e.g., for articles)
+    if (alternatePaths && alternatePaths[newLang]) {
+      router.push(alternatePaths[newLang]);
+      return;
+    }
+
     // Don't manually set language - it will update automatically via pathname
 
     // Remove current locale from pathname - check for complete path segments
@@ -209,8 +215,8 @@ export const HeaderInteractive: React.FC<HeaderInteractiveProps> = ({ menuData, 
           <Link
             href={getPath('/')}
             className={`flex items-center gap-2 cursor-pointer group mr-6 transition-all duration-300 ease-in-out will-change-[opacity,width,transform] ${isScrolled
-                ? "opacity-100 visible w-auto translate-x-0"
-                : "opacity-0 invisible w-0 -translate-x-2"
+              ? "opacity-100 visible w-auto translate-x-0"
+              : "opacity-0 invisible w-0 -translate-x-2"
               }`}
           >
             <img src="/images/qw-icon.svg" alt="Qahwa World Logo" className="h-10" />

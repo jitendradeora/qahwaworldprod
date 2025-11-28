@@ -14,7 +14,7 @@ interface CategoryPageProps {
 const CategoryPage: React.FC<CategoryPageProps> = ({ category, locale }) => {
   const t = getTranslations(locale);
   const getPath = (path: string) => getLocalizedPath(path, locale);
-  
+
   // Filter articles by category on server
   const articles = mockArticles.filter((a) => a.category === category);
 

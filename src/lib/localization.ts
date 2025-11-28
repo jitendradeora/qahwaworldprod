@@ -8,13 +8,17 @@ export function getLocalizedPath(path: string, locale: string = 'en'): string {
   if (locale === 'en') {
     return path;
   }
-  
-  // For AR/RU, add locale prefix
+
+  // Prevent double locale prefix
+  if (path.startsWith(`/${locale}/`) || path === `/${locale}`) {
+    return path;
+  }
+
   // Handle root path specially
   if (path === '/') {
     return `/${locale}`;
   }
-  
+
   // Add locale prefix to other paths
   return `/${locale}${path}`;
 }
