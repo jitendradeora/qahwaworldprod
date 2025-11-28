@@ -79,13 +79,8 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const observerRef = useRef<HTMLDivElement>(null);
 
-  // Mock gallery images (in real app, parse from content)
-  const galleryImages = [
-    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800",
-    "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800",
-    "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800",
-    "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800",
-  ];
+  // Get gallery images from article data
+  const galleryImages = article?.galleryImages || [];
 
   // Infinite scroll observer
   useEffect(() => {
@@ -291,47 +286,39 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                   )}
 
                   {/* Gallery Section */}
-                  <div className="my-8">
-                    <h3 className="text-xl mb-4 text-amber-900 dark:text-amber-100">
-                      Gallery
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {galleryImages.map((img, index) => (
-                        <div
-                          key={index}
-                          className="aspect-video overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => {
-                            setSelectedImageIndex(index);
-                            setGalleryOpen(true);
-                          }}
-                        >
-                          <img
-                            src={img}
-                            alt={`Gallery image ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))}
+                  {galleryImages.length > 0 && (
+                    <div className="my-8">
+                      <h3 className="text-xl mb-4 text-amber-900 dark:text-amber-100">
+                        Gallery
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        {galleryImages.map((img, index) => (
+                          <div
+                            key={index}
+                            className="aspect-video overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => {
+                              setSelectedImageIndex(index);
+                              setGalleryOpen(true);
+                            }}
+                          >
+                            <img
+                              src={img.sourceUrl}
+                              alt={img.altText || `Gallery image ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <p>
-                    The art of coffee brewing has evolved dramatically over the
-                    years. Whether it's the precise pour-over technique, the
-                    pressure-driven espresso extraction, or the immersive cold
-                    brew process, each method brings out unique flavors and
-                    characteristics from the coffee beans. Understanding these
-                    techniques not only enhances the taste experience but also
-                    deepens our appreciation for the craft behind every cup.
-                  </p>
-                  <p>
-                    As we look to the future, sustainability and ethical
-                    sourcing have become paramount in the coffee industry. From
-                    direct trade relationships with farmers to eco-friendly
-                    packaging solutions, the coffee community is increasingly
-                    focused on creating a positive impact at every stage of the
-                    supply chain.
-                  </p>
+                  {/* Content After Gallery */}
+                  {article.contentAfterGallery && (
+                    <div 
+                      className="prose prose-lg max-w-none my-8 text-gray-700 dark:text-gray-300"
+                      dangerouslySetInnerHTML={{ __html: article.contentAfterGallery }} 
+                    />
+                  )}
                 </div>
 
                 {/* Tags */}
@@ -483,7 +470,7 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
         </div>
 
         {/* Gallery Modal */}
-        {galleryOpen && (
+        {galleryOpen && galleryImages.length > 0 && (
           <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
             <button
               onClick={() => setGalleryOpen(false)}
@@ -494,8 +481,8 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 
             <div className="max-w-5xl w-full">
               <img
-                src={galleryImages[selectedImageIndex]}
-                alt={`Gallery image ${selectedImageIndex + 1}`}
+                src={galleryImages[selectedImageIndex]?.sourceUrl}
+                alt={galleryImages[selectedImageIndex]?.altText || `Gallery image ${selectedImageIndex + 1}`}
                 className="w-full h-auto max-h-[80vh] object-contain"
               />
 
@@ -537,8 +524,8 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                       }`}
                   >
                     <img
-                      src={img}
-                      alt={`Thumbnail ${index + 1}`}
+                      src={img.sourceUrl}
+                      alt={img.altText || `Thumbnail ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </button>

@@ -55,10 +55,12 @@ export const SearchContent: React.FC<SearchContentProps> = ({
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {results.map((article) => (
+          {results.map((article) => {
+            const categorySlug = article.categorySlug || article.category.toLowerCase().replace(/\s+/g, '-');
+            return (
             <Link
               key={article.id}
-              href={getPath(`/article/${article.id}`)}
+              href={getPath(`/${categorySlug}/${article.slug || article.id}`)}
               className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all"
             >
               <div className="aspect-video relative overflow-hidden">
@@ -102,7 +104,8 @@ export const SearchContent: React.FC<SearchContentProps> = ({
                 )}
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </>

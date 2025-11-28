@@ -27,6 +27,15 @@ export interface ArticleData {
             };
         };
     } | null;
+    postAdvancePost?: {
+        galleryImages?: {
+            nodes: Array<{
+                altText: string;
+                sourceUrl: string;
+            }>;
+        };
+        contentAfterGallery?: string;
+    };
     categories: {
         nodes: Array<{
             name: string;
