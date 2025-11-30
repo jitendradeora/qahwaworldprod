@@ -118,7 +118,6 @@ export async function searchArticles(
       pageInfo: result.data.posts.pageInfo,
     };
   } catch (error) {
-    console.error("Error searching articles:", error);
     return {
       articles: [],
       pageInfo: {

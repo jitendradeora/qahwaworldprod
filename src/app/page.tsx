@@ -149,18 +149,6 @@ export default async function RootHomePage() {
   // Fetch SEO data for JSON-LD schema (cached - same request as generateMetadata)
   const seoData = await getCachedSeoData('en', homePageId);
   
-  // Debug logging
-  if (seoData) {
-    console.log('SEO Data fetched successfully:', {
-      hasSchema: !!seoData.schema,
-      hasRawSchema: !!seoData.schema?.raw,
-      schemaType: typeof seoData.schema?.raw,
-      schemaLength: seoData.schema?.raw?.length || 0,
-    });
-  } else {
-    console.warn('No SEO data returned from getCachedSeoData');
-  }
-  
   return (
     <>
       <JsonLdSchema seoData={seoData} />

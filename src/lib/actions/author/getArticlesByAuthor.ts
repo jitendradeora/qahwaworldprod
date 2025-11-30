@@ -26,8 +26,6 @@ export async function getArticlesByAuthor(
       ...(after && { after })
     };
 
-    console.log('🔍 Fetching articles by author:', { authorId, language, first, after, variables });
-
     const { data, error } = await client.query<AuthorArticlesResponse>({
       query: GET_ARTICLES_BY_AUTHOR_ID,
       variables,
@@ -35,24 +33,17 @@ export async function getArticlesByAuthor(
     });
 
     if (error) {
-      console.error('❌ GraphQL error fetching author articles:', error);
       return {
         articles: [],
         pageInfo: { hasNextPage: false, endCursor: null },
       };
     }
-
-    console.log('✅ Author articles fetched:', { 
-      count: data?.posts?.nodes?.length || 0,
-      hasNextPage: data?.posts?.pageInfo?.hasNextPage 
-    });
   
     return {
       articles: data?.posts?.nodes || [],
       pageInfo: data?.posts?.pageInfo || { hasNextPage: false, endCursor: null },
     };
   } catch (error) {
-    console.error('❌ Error fetching articles by author:', error);
     return {
       articles: [],
       pageInfo: { hasNextPage: false, endCursor: null },

@@ -50,7 +50,6 @@ export async function getAboutPageData(lang: string): Promise<AboutPageData | nu
 
     return result.data.getAboutPageData;
   } catch (error) {
-    console.error("Error fetching about page data:", error);
     return null;
   }
 }

@@ -62,7 +62,6 @@ export async function getHomePageLatestArticles(language: string = "en"): Promis
 
     return result.data.posts.nodes;
   } catch (error) {
-    console.error("Error fetching home page articles:", error);
     return [];
   }
 }
@@ -111,7 +110,6 @@ export async function getTrendingPostsFromHomePage(lang: string): Promise<Trendi
 
     return result.data.trendingPosts;
   } catch (error) {
-    console.error("Error fetching trending posts:", error);
     return [];
   }
 }
@@ -169,7 +167,6 @@ export async function getCategoriesSectionForHomePage(lang: string): Promise<Cat
 
     return result.data.getCategorySectionData;
   } catch (error) {
-    console.error("Error fetching categories section data:", error);
     return [];
   }
 }
@@ -238,7 +235,6 @@ export async function getSpotlightDataForHomePage(lang: string): Promise<Spotlig
 
     return result.data.getSpotlightData;
   } catch (error) {
-    console.error("Error fetching spotlight data:", error);
     return null;
   }
 }
@@ -272,7 +268,6 @@ export async function getHomepageAdBanner(): Promise<HomepageAdBanner[]> {
 
     return result.data.getHomepageAdBanner;
   } catch (error) {
-    console.error("Error fetching homepage ad banners:", error);
     return [];
   }
 }

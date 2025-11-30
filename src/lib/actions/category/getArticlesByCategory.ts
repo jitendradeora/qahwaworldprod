@@ -33,7 +33,6 @@ export async function getArticlesByCategory(
     });
 
     if (error) {
-      console.error('❌ GraphQL error fetching category articles:', error);
       return {
         articles: [],
         pageInfo: { hasNextPage: false, endCursor: null },
@@ -45,7 +44,6 @@ export async function getArticlesByCategory(
       pageInfo: data?.posts?.pageInfo || { hasNextPage: false, endCursor: null },
     };
   } catch (error) {
-    console.error('❌ Error fetching articles by category:', error);
     return {
       articles: [],
       pageInfo: { hasNextPage: false, endCursor: null },

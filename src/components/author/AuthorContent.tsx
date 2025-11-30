@@ -55,7 +55,7 @@ export const AuthorContent: React.FC<AuthorContentProps> = ({
         setEndCursor(data.pageInfo?.endCursor ?? null);
       }
     } catch (error) {
-      console.error('Error loading more articles:', error);
+      // Error loading more articles
     } finally {
       setLoading(false);
     }

@@ -85,17 +85,10 @@ export async function getArticleBySlug(slug: string): Promise<ArticleData | null
 
 
         if (!result.data?.post) {
-            console.log('❌ No post found for slug:', slug);
             return null;
         }
         return result.data.post;
     } catch (error) {
-        console.error('❌ Error fetching article by slug:', slug);
-        console.error('Error details:', error);
-        if (error instanceof Error) {
-            console.error('Error message:', error.message);
-            console.error('Error stack:', error.stack);
-        }
         return null;
     }
 }
@@ -115,16 +108,10 @@ export async function getAuthorPostCount(authorSlug: string): Promise<number | n
         });
 
         if (!result.data?.getAuthorPostCountBySlug) {
-            console.log('❌ No post count found for author slug:', authorSlug);
             return null;
         }
         return result.data.getAuthorPostCountBySlug.count;
     } catch (error) {
-        console.error('❌ Error fetching author post count:', authorSlug);
-        console.error('Error details:', error);
-        if (error instanceof Error) {
-            console.error('Error message:', error.message);
-        }
         return null;
     }
 }
