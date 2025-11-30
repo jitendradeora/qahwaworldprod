@@ -113,6 +113,13 @@ export async function getArticleBySlug(slug: string): Promise<ArticleData | null
             query: GET_ARTICLE,
             variables: { id: slug },
             fetchPolicy: 'no-cache',
+            context: {
+                fetchOptions: {
+                    next: {
+                        tags: ['wordpress', 'wordpress-article', `wordpress-article-${slug}`],
+                    },
+                },
+            },
         });
 
 
@@ -137,6 +144,13 @@ export async function getAuthorPostCount(authorSlug: string): Promise<number | n
             query: GET_AUTHOR_POST_COUNT,
             variables: { slug: authorSlug },
             fetchPolicy: 'no-cache',
+            context: {
+                fetchOptions: {
+                    next: {
+                        tags: ['wordpress', 'wordpress-author', `wordpress-author-${authorSlug}`],
+                    },
+                },
+            },
         });
 
         if (!result.data?.getAuthorPostCountBySlug) {

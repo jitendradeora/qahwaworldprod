@@ -55,6 +55,13 @@ export async function HeaderMenuData(language: string = 'en'): Promise<Category[
         language: languageCode,
       },
       fetchPolicy: 'no-cache',
+      context: {
+        fetchOptions: {
+          next: {
+            tags: ['wordpress', `wordpress-${languageCode}`, 'wordpress-menu', 'wordpress-header'],
+          },
+        },
+      },
     });
 
     if (result.error || !result.data?.menuItems?.edges) {
