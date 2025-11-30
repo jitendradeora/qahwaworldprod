@@ -15,14 +15,10 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const redirectPath = searchParams.get('redirect') || '/';
 
-  console.log('🚪 Exit preview request received');
-
   try {
     // Disable draft mode
     const draft = await draftMode();
     draft.disable();
-    
-    console.log('✅ Draft mode disabled');
 
     // Redirect to the specified path or homepage
     const redirectUrl = new URL(redirectPath, request.url);

@@ -233,22 +233,17 @@ export default async function Page({ params, searchParams, locale = 'en' }: Prop
       previewId = typeof resolvedSearchParams.preview_id === 'string' ? resolvedSearchParams.preview_id : undefined;
     }
     
-    console.log('📄 Loading article:', { slug: decodedSlug, category: decodedCategorySlug, isDraftMode, hasToken: !!token, previewId });
-    
     // Fetch the article (use preview API if in draft mode)
     let articleData;
     
     if (isDraftMode) {
-      console.log('👁️ Fetching preview content...');
       // Check if slug is actually a numeric ID (for preview mode)
       const isNumericId = /^\d+$/.test(decodedSlug);
       const useId = previewId || (isNumericId ? decodedSlug : null);
       
       if (useId) {
-        console.log('📡 Fetching preview post by ID:', useId);
         articleData = await fetchPreviewPostById(useId, token);
       } else {
-        console.log('📡 Fetching preview post by slug:', decodedSlug);
         articleData = await fetchPreviewPostBySlug(decodedSlug, token);
       }
     } else {
