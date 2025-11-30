@@ -47,3 +47,28 @@ query SitemapTags($lang: String, $first: Int!, $after: String) {
     }
   }
 `;
+
+export const GET_LATEST_POSTS_FOR_NEWS_SITEMAP = gql`
+query LatestPostsForNewsSitemap($first: Int!, $lang: String) {
+    posts(
+      first: $first
+      where: { 
+        status: PUBLISH
+        language: $lang
+        orderby: { field: DATE, order: DESC }
+      }
+    ) {
+      nodes {
+        databaseId
+        title
+        slug
+        date
+        categories {
+          nodes {
+            slug
+          }
+        }
+      }
+    }
+  }
+`;
