@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { getArticlesByCategory } from '@/lib/actions/category/getArticlesByCategory';
 import { getHomepageAdBanner } from '@/lib/actions/home/homeAction';
 import { calculateReadTime, stripHtml } from '@/lib/utils';
@@ -191,6 +192,32 @@ export default async function CategoryRoute({ params, locale = 'en' }: Props) {
 
   // Fetch initial 12 articles from backend (use decoded category for API call)
   const { articles: backendArticles, pageInfo } = await getArticlesByCategory(decodedCategory, locale, 12);
+  
+  // If no articles found, we need to determine if the category exists or not
+  // WordPress GraphQL returns empty array for both:
+  // 1. Category exists but has no articles
+  // 2. Category doesn't exist
+  // 
+  // We check if the category translation found a match - if not, it's likely invalid
+  if (!backendArticles || backendArticles.length === 0) {
+    const categoryTranslation = getCategoryTranslation(decodedCategory, locale);
+    
+    // If getCategoryTranslation returns the same value as input, no translation was found
+    // This means the category slug doesn't match any known category in our translation map
+    // For invalid slugs like "dsds", this will be true
+    const normalizedCategory = decodedCategory.toLowerCase().trim();
+    const normalizedTranslation = categoryTranslation.toLowerCase().trim();
+    const isUnknownCategory = normalizedTranslation === normalizedCategory;
+    
+    // If category is unknown (not in translation map) and has no articles, show 404
+    // This handles cases like random slugs (dsds, test123, etc.)
+    // Note: This assumes all valid categories are in the translation map
+    // If you add new categories to WordPress, make sure to add them to translations.ts
+    if (isUnknownCategory) {
+      notFound();
+    }
+  }
+  
   // Map backend articles to frontend Article type
   const articles = backendArticles.map((a) => {
     // Find the category that matches the current locale's category slug

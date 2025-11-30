@@ -1,5 +1,6 @@
 
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { getArticlesByCategory } from '@/lib/actions/category/getArticlesByCategory';
 import { getHomepageAdBanner } from '@/lib/actions/home/homeAction';
 import { calculateReadTime } from '@/lib/utils';
@@ -192,6 +193,23 @@ export default async function CategoryRoute({ params, locale = 'ar' }: Props) {
 
   // Fetch initial 12 articles from backend (use decoded category for API call)
   const { articles: backendArticles, pageInfo } = await getArticlesByCategory(decodedCategory, locale, 12);
+  
+  // If no articles found, check if this is a valid category
+  if (!backendArticles || backendArticles.length === 0) {
+    const categoryTranslation = getCategoryTranslation(decodedCategory, locale);
+    
+    // If getCategoryTranslation returns the same value as input, no translation was found
+    // This means the category slug doesn't match any known category in our translation map
+    const normalizedCategory = decodedCategory.toLowerCase().trim();
+    const normalizedTranslation = categoryTranslation.toLowerCase().trim();
+    const isUnknownCategory = normalizedTranslation === normalizedCategory;
+    
+    // If category is unknown (not in translation map) and has no articles, show 404
+    if (isUnknownCategory) {
+      notFound();
+    }
+  }
+  
   // Map backend articles to frontend Article type
   const articles = backendArticles.map((a) => {
     // Find the category that matches the current locale's category slug
