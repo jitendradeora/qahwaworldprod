@@ -89,17 +89,21 @@ export const SearchContent: React.FC<SearchContentProps> = ({
                 </div>
                 {article.tags && article.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {article.tags.slice(0, 3).map((tag) => (
-                      <Link
-                        key={tag}
-                        href={getPath(`/tag/${tag}`)}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Badge variant="outline" className="text-xs hover:bg-accent">
-                          {tag}
-                        </Badge>
-                      </Link>
-                    ))}
+                    {article.tags.slice(0, 3).map((tag, index) => {
+                      const tagName = typeof tag === 'string' ? tag : tag.name;
+                      const tagSlug = typeof tag === 'string' ? tag : tag.slug;
+                      return (
+                        <Link
+                          key={index}
+                          href={getPath(`/tag/${encodeURIComponent(tagSlug)}`)}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Badge variant="outline" className="text-xs hover:bg-accent">
+                            {tagName}
+                          </Badge>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>

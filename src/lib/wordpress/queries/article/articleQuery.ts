@@ -53,6 +53,17 @@ export const GET_ARTICLE = gql`
         name
         slug
         databaseId
+        authorInfo {
+          authorBioEn
+          authorBioAr
+          authorBioRu
+          authorImage {
+            node {
+              altText
+              sourceUrl(size: THUMBNAIL)
+            }
+          }
+        }
       }
     }
     translations {
@@ -162,6 +173,14 @@ export const GET_ARTICLES_BY_CATEGORY = gql`
           }
         }
       }
+    }
+  }
+`;
+
+export const GET_AUTHOR_POST_COUNT = gql`
+  query AuthorPostCount($slug: String!) {
+    getAuthorPostCountBySlug(authorSlug: $slug) {
+      count
     }
   }
 `;

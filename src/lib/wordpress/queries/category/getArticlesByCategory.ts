@@ -1,13 +1,19 @@
 import { gql } from "@apollo/client";
 
 export const GET_ARTICLES_BY_CATEGORY = gql`
-  query GetArticlesByCategory($categorySlug: String!, $language: String) {
+  query GetArticlesByCategory($categorySlug: String!, $language: String, $first: Int, $after: String) {
     posts(
       where: {
         categoryName: $categorySlug
         language: $language
       }
+      first: $first
+      after: $after
     ) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       nodes {
         id
         title

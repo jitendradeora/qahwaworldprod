@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getLocalizedPath } from '@/lib/localization';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { mockArticles } from "../../data/mockArticles";
 import { Article } from "../../types";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -53,27 +52,27 @@ const getCategoryTranslation = (
 interface ArticleDetailPageProps {
   article: Article;
   locale: string;
+  postAd?: {
+    name: string;
+    content: string;
+  } | null;
+  relatedArticles?: Article[];
 }
 
 const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
   article: initialArticle,
   locale,
+  postAd,
+  relatedArticles: initialRelatedArticles = [],
 }) => {
   const { t, language } = useLanguage();
   const pathname = usePathname();
 
   const getPath = (path: string) => getLocalizedPath(path, locale);
 
-  // Get related articles from the same category (using mock data for now)
-  const related = mockArticles
-    .filter(
-      (a) => a.id !== initialArticle.id && a.category === initialArticle.category
-    )
-    .slice(0, 5);
-
   const [article] = useState<Article | null>(initialArticle);
-  const [relatedArticles] = useState<Article[]>(related);
-  const [loadedArticles, setLoadedArticles] = useState<Article[]>(related.slice(0, 1));
+  const [relatedArticles] = useState<Article[]>(initialRelatedArticles);
+  const [loadedArticles, setLoadedArticles] = useState<Article[]>(initialRelatedArticles.slice(0, 1));
   const [articlesCount, setArticlesCount] = useState(1);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -151,7 +150,7 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
       <SEO
         title={`${article.title} - Qahwa World`}
         description={article.excerpt}
-        keywords={`coffee, ${article.category}, ${article.tags?.join(", ")}`}
+        keywords={`coffee, ${article.category}, ${article.tags?.map(tag => typeof tag === 'string' ? tag : tag.name).join(", ")}`}
         ogImage={article.image}
       />
       <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -167,7 +166,7 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
               </Link>
               <ChevronRight className="w-4 h-4" />
               <Link
-                href={getPath(`/${encodeURIComponent(article.category)}`)}
+                href={getPath(`/${encodeURIComponent(article.categorySlug || article.category.toLowerCase().replace(/\s+/g, '-'))}`)}
                 className="hover:text-amber-700 dark:hover:text-amber-500"
               >
                 {getCategoryTranslation(article.category, language)}
@@ -183,17 +182,12 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
         {/* Leaderboard Ad below Breadcrumb */}
         <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
           <div className="container mx-auto px-4 py-4">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-4">
-              <div className="flex items-center justify-center h-24 text-center">
-                <div className="text-sm text-gray-600 dark:text-gray-300">
-                  <span className="block mb-1 text-xl">📰</span>
-                  <span className="block">Leaderboard Advertisement</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    728x90
-                  </span>
-                </div>
-              </div>
-            </div>
+            {postAd && (
+              <div 
+                className="w-full max-w-5xl mx-auto center"
+                dangerouslySetInnerHTML={{ __html: postAd.content }}
+              />
+            )}
           </div>
         </div>
 
@@ -202,7 +196,7 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
             {/* Main Article */}
             <article className="bg-white dark:bg-gray-800 border dark:border-gray-700 shadow-sm mb-8">
               {/* Featured Image - Reduced height on mobile */}
-              <div className="w-full h-48 md:h-96 overflow-hidden">
+              <div className="w-full overflow-hidden">
                 <img
                   src={article.image}
                   alt={article.title}
@@ -277,7 +271,7 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                 </div>
 
                 {/* Article Content */}
-                <div className="prose prose-lg max-w-none mb-8 text-gray-700 dark:text-gray-300">
+                <div className="post-content prose prose-lg max-w-none mb-8 text-gray-700 dark:text-gray-300">
                   {/* Only render excerpt as plain text, not HTML */}
                   {article.excerpt && <p>{stripHtml(article.excerpt)}</p>}
                   {/* Render content as HTML */}
@@ -328,70 +322,94 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                       Tags
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {article.tags.map((tag, index) => (
-                        <Link
-                          key={index}
-                          href={getPath(`/tag/${encodeURIComponent(tag)}`)}
-                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-amber-100 dark:hover:bg-amber-900 text-gray-700 dark:text-gray-300 hover:text-amber-900 dark:hover:text-amber-100 text-sm transition-colors"
-                        >
-                          #{tag}
-                        </Link>
-                      ))}
+                      {article.tags.map((tag, index) => {
+                        const tagName = typeof tag === 'string' ? tag : tag.name;
+                        const tagSlug = typeof tag === 'string' ? tag : tag.slug;
+                        return (
+                          <Link
+                            key={index}
+                            href={getPath(`/tag/${encodeURIComponent(tagSlug)}`)}
+                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-amber-100 dark:hover:bg-amber-900 text-gray-700 dark:text-gray-300 hover:text-amber-900 dark:hover:text-amber-100 text-sm transition-colors"
+                          >
+                            #{tagName}
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
                 {/* Author Box */}
                 <Link
-                  href={getPath(`/author/1`)}
+                  href={getPath(`/author/${article.authorId || article.id}`)}
                   className="block w-full"
                 >
                   <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 p-4 md:p-8 rounded-lg mb-8 shadow-md hover:shadow-lg transition-all group mt-8">
                     <div className="flex items-start gap-3 md:gap-6">
-                      <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-[#c90000] to-[#a00000] rounded-full flex items-center justify-center text-white text-xl md:text-3xl shrink-0 shadow-lg">
-                        {article.author.charAt(0)}
-                      </div>
+                      {article.authorImage ? (
+                        <div className="w-16 h-16 md:w-24 md:h-24 rounded-full overflow-hidden shrink-0 shadow-lg">
+                          <img
+                            src={article.authorImage.sourceUrl}
+                            alt={article.authorImage.altText || article.author}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-[#c90000] to-[#a00000] rounded-full flex items-center justify-center text-white text-xl md:text-3xl shrink-0 shadow-lg">
+                          {article.author.charAt(0)}
+                        </div>
+                      )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="text-lg md:text-xl group-hover:text-[#c90000] transition-colors">
                             {article.author}
                           </h3>
-                          <Badge variant="outline" className="text-xs">
-                            {language === "ar"
-                              ? "كاتب"
-                              : language === "ru"
-                                ? "Писатель"
-                                : "Writer"}
-                          </Badge>
                         </div>
-                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2 md:mb-3">
-                          {language === "ar"
-                            ? `صحفي متخصص في ${getCategoryTranslation(
-                              article.category,
-                              "ar"
-                            )}، يمتلك خبرة واسعة في تغطية الأحداث والتطورات في هذا المجال.`
-                            : language === "ru"
-                              ? `Журналист, специализирующийся на ${getCategoryTranslation(
+                        {article.authorBio && (
+                          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2 md:mb-3">
+                            {language === "ar" && article.authorBio.ar
+                              ? article.authorBio.ar
+                              : language === "ru" && article.authorBio.ru
+                                ? article.authorBio.ru
+                                : article.authorBio.en || `A journalist specializing in ${article.category}, with extensive experience covering events and developments in this field.`}
+                          </p>
+                        )}
+                        {!article.authorBio && (
+                          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-2 md:mb-3">
+                            {language === "ar"
+                              ? `صحفي متخصص في ${getCategoryTranslation(
                                 article.category,
-                                "ru"
-                              )}, с обширным опытом освещения событий и развития в этой области.`
-                              : `A journalist specializing in ${article.category}, with extensive experience covering events and developments in this field.`}
-                        </p>
+                                "ar"
+                              )}، يمتلك خبرة واسعة في تغطية الأحداث والتطورات في هذا المجال.`
+                              : language === "ru"
+                                ? `Журналист, специализирующийся на ${getCategoryTranslation(
+                                  article.category,
+                                  "ru"
+                                )}, с обширным опытом освещения событий и развития в этой области.`
+                                : `A journalist specializing in ${article.category}, with extensive experience covering events and developments in this field.`}
+                          </p>
+                        )}
                         <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-500 dark:text-gray-400">
                           <span>
-                            {language === "ar"
-                              ? "45 مقالاً"
-                              : language === "ru"
-                                ? "45 статей"
-                                : "45 articles"}
+                            {article.authorPostCount !== undefined
+                              ? language === "ar"
+                                ? `${article.authorPostCount} ${article.authorPostCount === 1 ? 'مقال' : 'مقالاً'}`
+                                : language === "ru"
+                                  ? `${article.authorPostCount} ${article.authorPostCount === 1 ? 'статья' : article.authorPostCount >= 2 && article.authorPostCount <= 4 ? 'статьи' : 'статей'}`
+                                  : `${article.authorPostCount} ${article.authorPostCount === 1 ? 'article' : 'articles'}`
+                              : language === "ar"
+                                ? "مقالات"
+                                : language === "ru"
+                                  ? "статей"
+                                  : "articles"}
                           </span>
                           <span>•</span>
                           <span className="text-[#c90000] group-hover:underline">
                             {language === "ar"
                               ? "عرض المقالات ←"
                               : language === "ru"
-                                ? "Просмотреть статьи ←"
-                                : "View Articles ←"}
+                                ? "Просмотреть статьи →"
+                                : "View Articles →"}
                           </span>
                         </div>
                       </div>
@@ -408,10 +426,13 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                   Related Articles
                 </h2>
 
-                {loadedArticles.map((relArticle, index) => (
+                {loadedArticles.map((relArticle, index) => {
+                  const categorySlug = relArticle.categorySlug || relArticle.category.toLowerCase().replace(/\s+/g, '-');
+                  const articleSlug = relArticle.slug || relArticle.id;
+                  return (
                   <React.Fragment key={relArticle.id}>
                     <Link
-                      href={getPath(`/article/${relArticle.id}`)}
+                      href={getPath(`/${encodeURIComponent(categorySlug)}/${encodeURIComponent(articleSlug)}`)}
                       className="bg-white dark:bg-gray-800 border dark:border-gray-700 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer block"
                     >
                       <div className="flex flex-col md:flex-row md:grid md:grid-cols-3 gap-0">
@@ -430,7 +451,7 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                             {relArticle.title}
                           </h3>
                           <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                            {relArticle.excerpt}
+                            {stripHtml(relArticle.excerpt)}
                           </p>
                           <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                             <span>{relArticle.date}</span>
@@ -441,7 +462,8 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
                       </div>
                     </Link>
                   </React.Fragment>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -458,10 +480,9 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
             {articlesCount >= Math.min(5, relatedArticles.length) &&
               relatedArticles.length > 0 && (
                 <div className="py-8 text-center text-gray-500">
-                  <p>You've reached the end of related articles</p>
-                  <Link href={getPath(`/${encodeURIComponent(article.category)}`)}>
-                    <Button className="mt-4 bg-amber-700 hover:bg-amber-800">
-                      View All {article.category} Articles
+                  <Link href={getPath(`/${encodeURIComponent(article.categorySlug || article.category.toLowerCase().replace(/\s+/g, '-'))}`)}>
+                    <Button className="mt-4 bg-amber-700 hover:bg-amber-800 hover:cursor-pointer">
+                      {t.viewAll} {getCategoryTranslation(article.category, language)} {t.articles}
                     </Button>
                   </Link>
                 </div>

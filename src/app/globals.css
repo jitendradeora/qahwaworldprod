@@ -226,3 +226,8 @@ html {
 .overflow-x-auto::-webkit-scrollbar-thumb:hover {
   background: #92400e;
 }
+
+.post-content img{
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
