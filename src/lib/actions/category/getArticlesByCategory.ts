@@ -26,10 +26,18 @@ export async function getArticlesByCategory(
       ...(after && { after })
     };
 
+    const normalizedLang = language.toLowerCase();
     const { data, error } = await client.query<CategoryArticlesResponse>({
       query: GET_ARTICLES_BY_CATEGORY,
       variables,
       fetchPolicy: "no-cache",
+      context: {
+        fetchOptions: {
+          next: {
+            tags: ['wordpress', `wordpress-${normalizedLang}`, 'wordpress-category', `wordpress-category-${categorySlug}`],
+          },
+        },
+      },
     });
 
     if (error) {

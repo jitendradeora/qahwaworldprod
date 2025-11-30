@@ -26,10 +26,18 @@ export async function getArticlesByTag(
       ...(after && { after })
     };
 
+    const normalizedLang = language.toLowerCase();
     const { data, error } = await client.query<TagArticlesResponse>({
       query: GET_ARTICLES_BY_TAG,
       variables,
       fetchPolicy: "no-cache",
+      context: {
+        fetchOptions: {
+          next: {
+            tags: ['wordpress', `wordpress-${normalizedLang}`, 'wordpress-tag', `wordpress-tag-${tagSlug}`],
+          },
+        },
+      },
     });
 
     if (error) {
@@ -68,12 +76,20 @@ export async function getAllTags(
   language: string = ''
 ): Promise<Tag[]> {
   try {
+    const normalizedLang = (language || '').toLowerCase();
     const result = await client.query<AllTagsResponse>({
       query: GET_ALL_TAGS,
       variables: {
-        language: language || '',
+        language: normalizedLang,
       },
       fetchPolicy: "no-cache",
+      context: {
+        fetchOptions: {
+          next: {
+            tags: ['wordpress', `wordpress-${normalizedLang || 'all'}`, 'wordpress-tags'],
+          },
+        },
+      },
     });
 
     if (result.error || !result.data?.tags?.edges) {

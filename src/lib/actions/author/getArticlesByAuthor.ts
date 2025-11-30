@@ -26,10 +26,18 @@ export async function getArticlesByAuthor(
       ...(after && { after })
     };
 
+    const normalizedLang = language.toLowerCase();
     const { data, error } = await client.query<AuthorArticlesResponse>({
       query: GET_ARTICLES_BY_AUTHOR_ID,
       variables,
       fetchPolicy: "no-cache",
+      context: {
+        fetchOptions: {
+          next: {
+            tags: ['wordpress', `wordpress-${normalizedLang}`, 'wordpress-author', `wordpress-author-${authorId}`],
+          },
+        },
+      },
     });
 
     if (error) {
