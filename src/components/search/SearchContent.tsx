@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getLocalizedPath } from '@/lib/localization';
 import { Article } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -19,17 +20,21 @@ export const SearchContent: React.FC<SearchContentProps> = ({
   locale,
   categories
 }) => {
+  const router = useRouter();
   const getPath = (path: string) => getLocalizedPath(path, locale);
   const [results, setResults] = useState<Article[]>(initialResults);
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  // Initialize with first category (which is "All" in the appropriate language)
+  const [selectedCategory, setSelectedCategory] = useState<string>(categories[0] || 'All');
 
   useEffect(() => {
-    if (selectedCategory === 'All') {
+    // Check if selected category is "All" (in any language)
+    const allTexts = ['All', 'الكل', 'Все'];
+    if (allTexts.includes(selectedCategory) || selectedCategory === categories[0]) {
       setResults(initialResults);
     } else {
       setResults(initialResults.filter(a => a.category === selectedCategory));
     }
-  }, [selectedCategory, initialResults]);
+  }, [selectedCategory, initialResults, categories]);
 
   return (
     <>
@@ -58,10 +63,12 @@ export const SearchContent: React.FC<SearchContentProps> = ({
           {results.map((article) => {
             const categorySlug = article.categorySlug || article.category.toLowerCase().replace(/\s+/g, '-');
             return (
-            <Link
+            <div
               key={article.id}
-              href={getPath(`/${categorySlug}/${article.slug || article.id}`)}
-              className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all"
+              className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+              onClick={() => {
+                router.push(getPath(`/${categorySlug}/${article.slug || article.id}`));
+              }}
             >
               <div className="aspect-video relative overflow-hidden">
                 <img
@@ -77,9 +84,10 @@ export const SearchContent: React.FC<SearchContentProps> = ({
                 <h3 className="font-semibold text-lg mb-2 group-hover:text-amber-700 dark:group-hover:text-amber-500 transition-colors line-clamp-2">
                   {article.title}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
-                  {article.excerpt}
-                </p>
+                <div 
+                  className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3"
+                  dangerouslySetInnerHTML={{ __html: article.excerpt }}
+                />
                 <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
@@ -88,7 +96,7 @@ export const SearchContent: React.FC<SearchContentProps> = ({
                   <span>{article.date}</span>
                 </div>
                 {article.tags && article.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
+                  <div className="flex flex-wrap gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
                     {article.tags.slice(0, 3).map((tag, index) => {
                       const tagName = typeof tag === 'string' ? tag : tag.name;
                       const tagSlug = typeof tag === 'string' ? tag : tag.slug;
@@ -96,7 +104,6 @@ export const SearchContent: React.FC<SearchContentProps> = ({
                         <Link
                           key={index}
                           href={getPath(`/tag/${encodeURIComponent(tagSlug)}`)}
-                          onClick={(e) => e.stopPropagation()}
                         >
                           <Badge variant="outline" className="text-xs hover:bg-accent">
                             {tagName}
@@ -107,7 +114,7 @@ export const SearchContent: React.FC<SearchContentProps> = ({
                   </div>
                 )}
               </div>
-            </Link>
+            </div>
             );
           })}
         </div>
