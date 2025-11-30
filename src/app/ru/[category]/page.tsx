@@ -1,4 +1,5 @@
 
+import { Metadata } from 'next';
 import { getArticlesByCategory } from '@/lib/actions/category/getArticlesByCategory';
 import { getHomepageAdBanner } from '@/lib/actions/home/homeAction';
 import { calculateReadTime } from '@/lib/utils';
@@ -8,10 +9,177 @@ import Link from 'next/link';
 import { CategoryContent } from '@/components/category/CategoryContent';
 import { ChevronRight } from 'lucide-react';
 import CategoryLanguageHandler from '@/components/category/CategoryLanguageHandler';
+import { JsonLdSchema } from '@/components/JsonLdSchema';
+import { PageSEO } from '@/lib/actions/seo/pagesSeoAction';
 
 interface Props {
   params: Promise<{ category: string }>;
   locale?: string;
+}
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://qahwaworld.com';
+
+/**
+ * Generate CollectionPage schema for category
+ */
+function generateCollectionPageSchema(
+  categoryName: string,
+  description: string,
+  url: string,
+  articles: Array<{ title: string; slug: string; categorySlug: string }>,
+  locale: string
+) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: categoryName,
+    description: description,
+    url: url,
+    inLanguage: locale,
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: articles.slice(0, 10).map((article, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: `${siteUrl}${getLocalizedPath(`/${article.categorySlug}/${article.slug}`, locale)}`,
+        name: article.title,
+      })),
+    },
+  };
+}
+
+/**
+ * Generate BreadcrumbList schema
+ */
+function generateBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+/**
+ * Convert article SEO to PageSEO format for JsonLdSchema component
+ */
+function convertArticleSeoToPageSeo(articleSeo: any): PageSEO | null {
+  if (!articleSeo) return null;
+
+  return {
+    title: articleSeo.title || '',
+    metaDesc: articleSeo.metaDesc || '',
+    metaKeywords: articleSeo.metaKeywords || '',
+    canonical: articleSeo.canonical || '',
+    opengraphTitle: articleSeo.opengraphTitle || '',
+    opengraphDescription: articleSeo.opengraphDescription || '',
+    opengraphUrl: articleSeo.opengraphUrl || '',
+    opengraphImage: articleSeo.opengraphImage ? {
+      sourceUrl: articleSeo.opengraphImage.sourceUrl || '',
+    } : null,
+    opengraphType: articleSeo.opengraphType || 'website',
+    opengraphSiteName: articleSeo.opengraphSiteName || 'Qahwa World',
+    opengraphAuthor: articleSeo.opengraphAuthor || '',
+    opengraphPublisher: articleSeo.opengraphPublisher || '',
+    opengraphPublishedTime: articleSeo.opengraphPublishedTime || '',
+    opengraphModifiedTime: articleSeo.opengraphModifiedTime || '',
+    twitterTitle: articleSeo.opengraphTitle || '',
+    twitterDescription: articleSeo.twitterDescription || '',
+    twitterImage: articleSeo.twitterImage ? {
+      sourceUrl: articleSeo.twitterImage.sourceUrl || '',
+    } : null,
+    readingTime: articleSeo.readingTime || 0,
+    metaRobotsNoindex: articleSeo.metaRobotsNoindex || 'index',
+    metaRobotsNofollow: articleSeo.metaRobotsNofollow || 'follow',
+    breadcrumbs: [],
+    schema: articleSeo.schema ? {
+      pageType: articleSeo.schema.pageType ? [articleSeo.schema.pageType] : [],
+      raw: articleSeo.schema.raw || '',
+    } : {
+      pageType: [],
+      raw: '',
+    },
+  };
+}
+
+/**
+ * Generate metadata for category page
+ */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { category } = await params;
+  const decodedCategory = decodeURIComponent(category);
+  const locale = 'ru';
+  
+  const { articles: backendArticles } = await getArticlesByCategory(decodedCategory, locale, 1);
+  
+  if (!backendArticles || backendArticles.length === 0) {
+    const categoryName = getCategoryTranslation(decodedCategory, locale);
+    return {
+      title: `${categoryName} - Qahwa World`,
+      description: `Просмотр статей в категории ${categoryName}`,
+    };
+  }
+
+  const firstArticle = backendArticles[0];
+  const matchingCategory = firstArticle.categories?.nodes?.find(cat => cat.slug === decodedCategory) 
+    || firstArticle.categories?.nodes?.[0];
+  const categoryName = matchingCategory?.name || getCategoryTranslation(decodedCategory, locale);
+  
+  // Use SEO data from first article if available
+  const seoData = firstArticle.seo;
+  const categoryUrl = `${siteUrl}${getLocalizedPath(`/${decodedCategory}`, locale)}`;
+  
+  const title = seoData?.title 
+    ? `${seoData.title} - Qahwa World`
+    : `${categoryName} - Qahwa World`;
+  const description = seoData?.metaDesc || `Просмотр статей в категории ${categoryName} на Qahwa World`;
+  const canonical = seoData?.canonical || categoryUrl;
+  const ogTitle = seoData?.opengraphTitle || title;
+  const ogDescription = seoData?.opengraphDescription || description;
+  const ogUrl = seoData?.opengraphUrl || categoryUrl;
+  const ogImage = seoData?.opengraphImage?.sourceUrl || firstArticle.featuredImage?.node?.sourceUrl;
+  const ogType = (seoData?.opengraphType === 'article' ? 'article' : 'website') as 'website' | 'article';
+  const twitterTitle = seoData?.opengraphTitle || ogTitle;
+  const twitterDescription = seoData?.twitterDescription || ogDescription;
+  const twitterImage = seoData?.twitterImage?.sourceUrl || ogImage;
+
+  return {
+    title,
+    description,
+    keywords: seoData?.metaKeywords || `${categoryName}, кофе, кахва, статьи`,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: ogTitle,
+      description: ogDescription,
+      url: ogUrl,
+      siteName: seoData?.opengraphSiteName || 'Qahwa World',
+      type: ogType,
+      ...(ogImage && {
+        images: [{
+          url: ogImage,
+          alt: categoryName,
+        }],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: twitterTitle,
+      description: twitterDescription,
+      ...(twitterImage && {
+        images: [twitterImage],
+      }),
+    },
+    robots: {
+      index: seoData?.metaRobotsNoindex === 'noindex' ? false : true,
+      follow: seoData?.metaRobotsNofollow === 'nofollow' ? false : true,
+    },
+  };
 }
 
 export default async function CategoryRoute({ params, locale = 'ru' }: Props) {
@@ -65,12 +233,46 @@ export default async function CategoryRoute({ params, locale = 'ru' }: Props) {
   // Get the category name for display (use the matching category's name, or fallback to translation)
   const categoryName = matchingCategory?.name || getCategoryTranslation(decodedCategory, locale);
 
+  // Get SEO data from first article if available
+  const firstArticleSeo = backendArticles[0]?.seo;
+  const pageSeoData = firstArticleSeo ? convertArticleSeoToPageSeo(firstArticleSeo) : null;
+
+  // Generate schemas
+  const categoryUrl = `${siteUrl}${getLocalizedPath(`/${decodedCategory}`, locale)}`;
+  const collectionSchema = articles.length > 0 
+    ? generateCollectionPageSchema(
+        categoryName,
+        firstArticleSeo?.metaDesc || `Просмотр статей в категории ${categoryName}`,
+        categoryUrl,
+        articles,
+        locale
+      )
+    : null;
+  
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: t.home, url: `${siteUrl}${getLocalizedPath('/', locale)}` },
+    { name: categoryName, url: categoryUrl },
+  ]);
+
   // Fetch ad banners
   const adBanners = await getHomepageAdBanner();
   const categoryAd = adBanners.find(banner => banner.name === 'category_ad');
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
+      {/* JSON-LD Schemas */}
+      {pageSeoData && <JsonLdSchema seoData={pageSeoData} />}
+      {collectionSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      
       <CategoryLanguageHandler
         categorySlug={decodedCategory}
         categoryTranslations={categoryTranslations}
