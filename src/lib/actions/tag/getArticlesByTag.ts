@@ -1,5 +1,5 @@
 import client from "@/lib/client/ApolloClient";
-import { GET_ARTICLES_BY_TAG } from "@/lib/wordpress/queries/tag/getArticlesByTag";
+import { GET_ARTICLES_BY_TAG, GET_ALL_TAGS } from "@/lib/wordpress/queries/tag/getArticlesByTag";
 import { Article } from "@/types/wordpress";
 
 export interface TagArticlesResponse {
@@ -48,6 +48,44 @@ export async function getArticlesByTag(
       articles: [],
       pageInfo: { hasNextPage: false, endCursor: null },
     };
+  }
+}
+
+export interface Tag {
+  name: string;
+  slug: string;
+}
+
+export interface AllTagsResponse {
+  tags: {
+    edges: Array<{
+      node: Tag;
+    }>;
+  };
+}
+
+export async function getAllTags(
+  language: string = ''
+): Promise<Tag[]> {
+  try {
+    const result = await client.query<AllTagsResponse>({
+      query: GET_ALL_TAGS,
+      variables: {
+        language: language || '',
+      },
+      fetchPolicy: "no-cache",
+    });
+
+    if (result.error || !result.data?.tags?.edges) {
+      return [];
+    }
+
+    return result.data.tags.edges.map(edge => ({
+      name: edge.node.name.replace(/^"|"$/g, ''), // Remove quotes from tag names
+      slug: edge.node.slug,
+    }));
+  } catch (error) {
+    return [];
   }
 }
 

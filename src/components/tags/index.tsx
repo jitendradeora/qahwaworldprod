@@ -11,48 +11,46 @@ import { Badge } from '../ui/badge';
 import { ChevronRight, Tag } from 'lucide-react';
 import { SEO } from '../SEO';
 import { Language } from '../../types';
-
-const getCategoryTranslation = (category: string, language: Language): string => {
-  const categoryTranslations: Record<string, { en: string; ar: string; ru: string }> = {
-    'News': { en: 'News', ar: 'أخبار', ru: 'Новости' },
-    'Coffee Community': { en: 'Coffee Community', ar: 'مجتمع القهوة', ru: 'Кофейное Сообщество' },
-    'Studies': { en: 'Studies', ar: 'دراسات', ru: 'Исследования' },
-    'Interview': { en: 'Interview', ar: 'حوارات', ru: 'Интервью' },
-    'Coffee Reflections': { en: 'Coffee Reflections', ar: 'تأملات', ru: 'Размышления' },
-  };
-  return categoryTranslations[category]?.[language] || category;
-};
+import { getAllTags } from '@/lib/actions/tag/getArticlesByTag';
 
 interface TagsPageProps {
   tag?: string;
+  initialTags?: { name: string; slug: string }[];
+  locale?: string;
 }
 
-const TagsPage: React.FC<TagsPageProps> = ({ tag }) => {
+const TagsPage: React.FC<TagsPageProps> = ({ tag, initialTags = [], locale: propLocale }) => {
   const { t, language } = useLanguage();
   const params = useParams() as { locale?: string };
-  const locale = params?.locale || 'en';
+  const locale = propLocale || params?.locale || 'en';
   const router = useRouter();
   const getPath = (path: string) => getLocalizedPath(path, locale);
-  const [allTags, setAllTags] = useState<{ tag: string; count: number }[]>([]);
+  const [allTags, setAllTags] = useState<{ name: string; slug: string }[]>(initialTags);
+  const [loading, setLoading] = useState(false);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
 
   useEffect(() => {
-    // Get all unique tags with counts
-    const tagMap = new Map<string, number>();
-    mockArticles.forEach(article => {
-      article.tags?.forEach(t => {
-        const tagName = typeof t === 'string' ? t : t.name;
-        tagMap.set(tagName, (tagMap.get(tagName) || 0) + 1);
-      });
-    });
+    // If initialTags are provided, use them; otherwise fetch
+    if (initialTags.length > 0) {
+      setAllTags(initialTags);
+    } else {
+      // Fetch all tags from WordPress if not provided
+      const fetchTags = async () => {
+        try {
+          setLoading(true);
+          const tags = await getAllTags(locale);
+          setAllTags(tags);
+        } catch (error) {
+          console.error('Error fetching tags:', error);
+          setAllTags([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchTags();
+    }
 
-    const tagsArray = Array.from(tagMap.entries())
-      .map(([tag, count]) => ({ tag, count }))
-      .sort((a, b) => b.count - a.count);
-
-    setAllTags(tagsArray);
-
-    // Filter articles by tag if specified
+    // Filter articles by tag if specified (using mock data for now)
     if (tag) {
       const filtered = mockArticles.filter(a => 
         a.tags?.some(t => {
@@ -63,7 +61,7 @@ const TagsPage: React.FC<TagsPageProps> = ({ tag }) => {
       );
       setFilteredArticles(filtered);
     }
-  }, [tag]);
+  }, [tag, locale, initialTags]);
 
   // If viewing specific tag
   if (tag) {
@@ -217,69 +215,33 @@ const TagsPage: React.FC<TagsPageProps> = ({ tag }) => {
           <h2 className="text-2xl text-amber-900 dark:text-amber-100 mb-6">
             {language === 'ar' ? 'الوسوم الشائعة' : language === 'ru' ? 'Популярные Теги' : 'Popular Tags'}
           </h2>
-          <div className="flex flex-wrap gap-3">
-            {allTags.map(({ tag: tagName, count }) => (
-              <Link
-                key={tagName}
-                href={getPath(`/tag/${encodeURIComponent(tagName)}`)}
-                className="group relative px-6 py-3 bg-gray-50 dark:bg-gray-700 hover:bg-amber-50 dark:hover:bg-amber-900 border dark:border-gray-600 hover:border-amber-700 dark:hover:border-amber-600 transition-all"
-                style={{
-                  fontSize: `${Math.min(24, 14 + count * 2)}px`
-                }}
-              >
-                <span className="text-gray-700 dark:text-gray-300 group-hover:text-amber-900 dark:group-hover:text-amber-100">
-                  #{tagName}
-                </span>
-                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 group-hover:text-amber-700 dark:group-hover:text-amber-300">
-                  ({count})
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Banner Ad */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border p-6 mt-8">
-          <div className="flex items-center justify-center h-32 text-center">
-            <div className="text-sm text-gray-600">
-              <span className="block mb-2 text-2xl">📰</span>
-              <span className="block">Banner Advertisement</span>
-              <span className="text-xs text-gray-500">970x90</span>
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600 dark:text-gray-400">
+                {language === 'ar' ? 'جاري التحميل...' : language === 'ru' ? 'Загрузка...' : 'Loading tags...'}
+              </p>
             </div>
-          </div>
-        </div>
-
-        {/* Tags by Category */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          {['News', 'Studies', 'Coffee Community', 'Interview', 'Coffee Reflections'].map(category => {
-            const categoryTags = allTags.filter(({ tag: tagName }) => {
-              return mockArticles.some(a => 
-                a.category === category && a.tags?.some(t => {
-                  const tName = typeof t === 'string' ? t : t.name;
-                  return tName === tagName;
-                })
-              );
-            });
-
-            if (categoryTags.length === 0) return null;
-
-            return (
-              <div key={category} className="bg-white dark:bg-gray-800 border dark:border-gray-700 shadow-sm p-6">
-                <h3 className="text-xl text-amber-900 dark:text-amber-100 mb-4">{getCategoryTranslation(category, language)}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {categoryTags.slice(0, 6).map(({ tag: tagName, count }) => (
-                    <Link
-                      key={tagName}
-                      href={getPath(`/tag/${encodeURIComponent(tagName)}`)}
-                      className="px-4 py-2 bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 text-sm transition-colors"
-                    >
-                      #{tagName} <span className="text-xs text-gray-500">({count})</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+          ) : allTags.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600 dark:text-gray-400">
+                {language === 'ar' ? 'لا توجد وسوم متاحة' : language === 'ru' ? 'Теги не найдены' : 'No tags available'}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {allTags.map(({ name, slug }) => (
+                <Link
+                  key={slug}
+                  href={getPath(`/tag/${encodeURIComponent(slug)}`)}
+                  className="group relative px-6 py-3 bg-gray-50 dark:bg-gray-700 hover:bg-amber-50 dark:hover:bg-amber-900 border dark:border-gray-600 hover:border-amber-700 dark:hover:border-amber-600 transition-all"
+                >
+                  <span className="text-gray-700 dark:text-gray-300 group-hover:text-amber-900 dark:group-hover:text-amber-100">
+                    #{name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

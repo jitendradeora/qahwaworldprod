@@ -88,3 +88,15 @@ export const GET_ARTICLES_BY_TAG = gql`
   }
 `;
 
+export const GET_ALL_TAGS = gql`
+  query GetAllTags($language: String = "") {
+    tags(where: {language: $language}, first: 10000) {
+      edges {
+        node {
+          name
+          slug
+        }
+      }
+    }
+  }
+`;
