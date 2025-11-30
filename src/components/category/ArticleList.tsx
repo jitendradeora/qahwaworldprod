@@ -34,7 +34,7 @@ const ArticleList: React.FC<ArticleListProps> = ({ articles, locale }) => {
       {articles.map((article) => (
         <Link
           key={article.id}
-          href={getPath(`/${encodeURIComponent(article.category)}/${encodeURIComponent(article.slug || article.id)}`)}
+          href={getPath(`/${encodeURIComponent(article.categorySlug || article.category.toLowerCase().replace(/\s+/g, '-'))}/${encodeURIComponent(article.slug || article.id)}`)}
           className="group flex gap-6 bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all"
         >
           <div className="w-80 h-48 relative overflow-hidden flex-shrink-0">

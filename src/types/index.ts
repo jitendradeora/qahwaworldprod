@@ -9,9 +9,21 @@ export interface Article {
   image: string;
   date: string;
   author: string;
+  authorId?: number;
+  authorSlug?: string;
+  authorBio?: {
+    en?: string;
+    ar?: string;
+    ru?: string;
+  };
+  authorImage?: {
+    altText: string;
+    sourceUrl: string;
+  };
+  authorPostCount?: number;
   readTime: string;
   featured?: boolean;
-  tags?: string[];
+  tags?: string[] | Array<{ name: string; slug: string }>;
   content?: string;
   slug?: string;
   galleryImages?: Array<{
@@ -76,6 +88,7 @@ export interface Translation {
   // Common
   readMore: string;
   viewAll: string;
+  articles: string;
   home: string;
   tags: string;
   allTags: string;

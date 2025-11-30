@@ -1,5 +1,6 @@
 
 import { getArticlesByCategory } from '@/lib/actions/category/getArticlesByCategory';
+import { getHomepageAdBanner } from '@/lib/actions/home/homeAction';
 import { calculateReadTime } from '@/lib/utils';
 import { getTranslations, getCategoryTranslation } from '@/lib/translations';
 import { getLocalizedPath } from '@/lib/localization';
@@ -21,23 +22,32 @@ export default async function CategoryRoute({ params, locale = 'en' }: Props) {
   const getPath = (path: string) => getLocalizedPath(path, locale);
 
 
-  // Fetch articles from backend (use decoded category for API call)
-  const backendArticles = await getArticlesByCategory(decodedCategory, locale);
+  // Fetch initial 12 articles from backend (use decoded category for API call)
+  const { articles: backendArticles, pageInfo } = await getArticlesByCategory(decodedCategory, locale, 12);
   // Map backend articles to frontend Article type
-  const articles = backendArticles.map((a) => ({
-    id: a.id,
-    title: a.title,
-    excerpt: a.excerpt,
-    category: a.categories?.nodes?.[0]?.slug || '',
-    image: a.featuredImage?.node?.sourceUrl || '',
-    date: a.date,
-    author: a.author?.node?.name || '',
-    readTime: calculateReadTime(a.content || ''),
-    featured: a.articleDetails?.featured,
-    tags: a.tags?.nodes?.map((t: { name: string }) => t.name) || [],
-    content: a.content,
-    slug: a.slug,
-  }));
+  const articles = backendArticles.map((a) => {
+    // Find the category that matches the current locale's category slug
+    const matchingCategory = a.categories?.nodes?.find(cat => cat.slug === decodedCategory) 
+      || a.categories?.nodes?.[0];
+    const categoryName = matchingCategory?.name || '';
+    const categorySlug = matchingCategory?.slug || '';
+    
+    return {
+      id: a.id,
+      title: a.title,
+      excerpt: a.excerpt,
+      category: categoryName,
+      categorySlug: categorySlug,
+      image: a.featuredImage?.node?.sourceUrl || '',
+      date: a.date,
+      author: a.author?.node?.name || '',
+      readTime: calculateReadTime(a.content || ''),
+      featured: a.articleDetails?.featured,
+      tags: a.tags?.nodes?.map((t: { name: string }) => t.name) || [],
+      content: a.content,
+      slug: a.slug,
+    };
+  });
   // Collect all category translations from all category nodes
   // Find the category node that matches the current categorySlug, or use all categories
   const allCategoryTranslations = backendArticles
@@ -55,33 +65,9 @@ export default async function CategoryRoute({ params, locale = 'en' }: Props) {
   // Get the category name for display (use the matching category's name, or fallback to translation)
   const categoryName = matchingCategory?.name || getCategoryTranslation(decodedCategory, locale);
 
-  const categoryDescriptions: Record<string, { en: string; ar: string; ru: string }> = {
-    News: {
-      en: "Stay updated with the latest news and trends in the coffee industry",
-      ar: "ابق على اطلاع بأحدث الأخبار والاتجاهات في صناعة القهوة",
-      ru: "Будьте в курсе последних новостей и тенденций в кофейной индустрии",
-    },
-    "Coffee Community": {
-      en: "Stories and insights from coffee communities around the world",
-      ar: "قصص ورؤى من مجتمعات القهوة حول العالم",
-      ru: "Истории и идеи от кофейных сообществ по всему миру",
-    },
-    Studies: {
-      en: "Research and scientific findings about coffee and its effects",
-      ar: "الأبحاث والنتائج العلمية حول القهوة وتأثيراتها",
-      ru: "Исследования и научные открытия о кофе и его эффектах",
-    },
-    Interview: {
-      en: "Exclusive interviews with coffee experts and industry leaders",
-      ar: "مقابلات حصرية مع خبراء القهوة وقادة الصناعة",
-      ru: "Эксклюзивные интервью с экспертами по кофе и лидерами отрасли",
-    },
-    "Coffee Reflections": {
-      en: "Personal stories and reflections on coffee culture",
-      ar: "قصص شخصية وتأملات حول ثقافة القهوة",
-      ru: "Личные истории и размышления о кофейной культуре",
-    },
-  };
+  // Fetch ad banners
+  const adBanners = await getHomepageAdBanner();
+  const categoryAd = adBanners.find(banner => banner.name === 'category_ad');
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -113,23 +99,18 @@ export default async function CategoryRoute({ params, locale = 'en' }: Props) {
           <h1 className="text-4xl font-bold mb-3 text-gray-900 dark:text-gray-100">
             {categoryName}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 max-w-2xl">
-            {categoryDescriptions[decodedCategory]?.[locale as 'en' | 'ar' | 'ru'] || ''}
-          </p>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
         {/* Banner Ad */}
-        <div className="bg-gradient-to-r from-green-50 to-teal-50 dark:from-gray-700 dark:to-gray-600 border dark:border-gray-600 p-6 mb-8 rounded-lg">
-          <div className="flex items-center justify-center h-32 text-center">
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              <span className="block mb-2 text-2xl">📢</span>
-              <span className="block">Banner Advertisement</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">970x90</span>
+        {categoryAd && (
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 p-6 mb-8 rounded-lg">
+            <div className="w-full max-w-5xl mx-auto center">
+              <div dangerouslySetInnerHTML={{ __html: categoryAd.content }} />
             </div>
           </div>
-        </div>
+        )}
 
         {/* No Articles Message */}
         {(!articles || articles.length === 0) ? (
@@ -145,7 +126,13 @@ export default async function CategoryRoute({ params, locale = 'en' }: Props) {
             </Link>
           </div>
         ) : (
-          <CategoryContent articles={articles} locale={locale} />
+          <CategoryContent
+            initialArticles={articles}
+            locale={locale}
+            categorySlug={decodedCategory}
+            initialHasNextPage={pageInfo.hasNextPage}
+            initialEndCursor={pageInfo.endCursor}
+          />
         )}
       </div>
     </div>

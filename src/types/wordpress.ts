@@ -71,8 +71,20 @@ export interface Tag {
 export interface Author {
   name: string;
   slug: string;
+  databaseId?: number;
   description?: string;
   avatar?: {
     url: string;
+  };
+  authorInfo?: {
+    authorBioEn?: string;
+    authorBioAr?: string;
+    authorBioRu?: string;
+    authorImage?: {
+      node: {
+        altText: string;
+        sourceUrl: string;
+      };
+    };
   };
 }

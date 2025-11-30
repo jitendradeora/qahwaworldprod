@@ -1,10 +1,9 @@
-import { TagsPage } from '@/components/tags';
+import TagRoute from '@/app/tag/[tag]/page';
 
 interface Props {
-  params: Promise<{ tag: string; locale: string }>;
+  params: Promise<{ tag: string }>;
 }
 
-export default async function TagRoute({ params }: Props) {
-  const { tag } = await params;
-  return <TagsPage tag={tag} />;
+export default async function RussianTagRoute({ params }: Props) {
+  return <TagRoute params={params} locale="ru" />;
 }

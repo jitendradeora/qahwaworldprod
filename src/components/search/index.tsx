@@ -39,7 +39,7 @@ const SearchResultsPage = async ({ query = '', locale }: SearchResultsPageProps)
         author: article.author.node.name,
         date: formatDate(article.date, locale),
         readTime: calculateReadTime(article.content),
-        tags: article.tags.nodes.map(tag => tag.name),
+        tags: article.tags.nodes.map(tag => ({ name: tag.name, slug: tag.slug })),
         slug: article.slug,
       };
     });

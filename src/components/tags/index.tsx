@@ -41,7 +41,8 @@ const TagsPage: React.FC<TagsPageProps> = ({ tag }) => {
     const tagMap = new Map<string, number>();
     mockArticles.forEach(article => {
       article.tags?.forEach(t => {
-        tagMap.set(t, (tagMap.get(t) || 0) + 1);
+        const tagName = typeof t === 'string' ? t : t.name;
+        tagMap.set(tagName, (tagMap.get(tagName) || 0) + 1);
       });
     });
 
@@ -53,7 +54,13 @@ const TagsPage: React.FC<TagsPageProps> = ({ tag }) => {
 
     // Filter articles by tag if specified
     if (tag) {
-      const filtered = mockArticles.filter(a => a.tags?.includes(tag));
+      const filtered = mockArticles.filter(a => 
+        a.tags?.some(t => {
+          const tagName = typeof t === 'string' ? t : t.name;
+          const tagSlug = typeof t === 'string' ? t : t.slug;
+          return tagName === tag || tagSlug === tag;
+        })
+      );
       setFilteredArticles(filtered);
     }
   }, [tag]);
@@ -125,19 +132,23 @@ const TagsPage: React.FC<TagsPageProps> = ({ tag }) => {
                     {article.excerpt}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {article.tags?.slice(0, 3).map((t, index) => (
-                      <span
-                        key={index}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          router.push(getPath(`/tag/${encodeURIComponent(t)}`));
-                        }}
-                        className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-amber-100 dark:hover:bg-amber-900 text-gray-600 dark:text-gray-300 hover:text-amber-900 dark:hover:text-amber-100 transition-colors cursor-pointer"
-                      >
-                        #{t}
-                      </span>
-                    ))}
+                    {article.tags?.slice(0, 3).map((t, index) => {
+                      const tagName = typeof t === 'string' ? t : t.name;
+                      const tagSlug = typeof t === 'string' ? t : t.slug;
+                      return (
+                        <span
+                          key={index}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            router.push(getPath(`/tag/${encodeURIComponent(tagSlug)}`));
+                          }}
+                          className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-amber-100 dark:hover:bg-amber-900 text-gray-600 dark:text-gray-300 hover:text-amber-900 dark:hover:text-amber-100 transition-colors cursor-pointer"
+                        >
+                          #{tagName}
+                        </span>
+                      );
+                    })}
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                     <span>{article.author}</span>
@@ -150,7 +161,13 @@ const TagsPage: React.FC<TagsPageProps> = ({ tag }) => {
 
           {filteredArticles.length === 0 && (
             <div className="text-center py-16">
-              <h3 className="text-xl text-gray-600 dark:text-gray-400">No articles found with this tag</h3>
+              <h3 className="text-xl text-gray-600 dark:text-gray-400">
+                {language === 'ar'
+                  ? 'لا توجد مقالات بهذا الوسم'
+                  : language === 'ru'
+                    ? 'Статей с этим тегом не найдено'
+                    : 'No articles found with this tag'}
+              </h3>
             </div>
           )}
         </div>
@@ -237,7 +254,10 @@ const TagsPage: React.FC<TagsPageProps> = ({ tag }) => {
           {['News', 'Studies', 'Coffee Community', 'Interview', 'Coffee Reflections'].map(category => {
             const categoryTags = allTags.filter(({ tag: tagName }) => {
               return mockArticles.some(a => 
-                a.category === category && a.tags?.includes(tagName)
+                a.category === category && a.tags?.some(t => {
+                  const tName = typeof t === 'string' ? t : t.name;
+                  return tName === tagName;
+                })
               );
             });
 

@@ -1,5 +1,5 @@
 import client from "@/lib/client/ApolloClient";
-import { GET_ARTICLE } from "@/lib/wordpress/queries/article/articleQuery";
+import { GET_ARTICLE, GET_AUTHOR_POST_COUNT } from "@/lib/wordpress/queries/article/articleQuery";
 
 export interface ArticleTranslation {
     slug: string;
@@ -59,6 +59,17 @@ export interface ArticleData {
             name: string;
             slug: string;
             databaseId: number;
+            authorInfo?: {
+                authorBioEn?: string;
+                authorBioAr?: string;
+                authorBioRu?: string;
+                authorImage?: {
+                    node: {
+                        altText: string;
+                        sourceUrl: string;
+                    };
+                };
+            };
         };
     };
     translations?: ArticleTranslation[];
@@ -84,6 +95,35 @@ export async function getArticleBySlug(slug: string): Promise<ArticleData | null
         if (error instanceof Error) {
             console.error('Error message:', error.message);
             console.error('Error stack:', error.stack);
+        }
+        return null;
+    }
+}
+
+export interface AuthorPostCountData {
+    getAuthorPostCountBySlug: {
+        count: number;
+    };
+}
+
+export async function getAuthorPostCount(authorSlug: string): Promise<number | null> {
+    try {
+        const result = await client.query<AuthorPostCountData>({
+            query: GET_AUTHOR_POST_COUNT,
+            variables: { slug: authorSlug },
+            fetchPolicy: 'no-cache',
+        });
+
+        if (!result.data?.getAuthorPostCountBySlug) {
+            console.log('❌ No post count found for author slug:', authorSlug);
+            return null;
+        }
+        return result.data.getAuthorPostCountBySlug.count;
+    } catch (error) {
+        console.error('❌ Error fetching author post count:', authorSlug);
+        console.error('Error details:', error);
+        if (error instanceof Error) {
+            console.error('Error message:', error.message);
         }
         return null;
     }
