@@ -7,6 +7,10 @@ import { Article } from '@/types';
 import { Metadata } from 'next';
 import { getHomepageAdBanner } from '@/lib/actions/home/homeAction';
 import { getArticlesByCategory } from '@/lib/actions/category/getArticlesByCategory';
+import { JsonLdSchema } from '@/components/JsonLdSchema';
+import { PageSEO } from '@/lib/actions/seo/pagesSeoAction';
+import { getLocalizedPath } from '@/lib/localization';
+import { getTranslations } from '@/lib/translations';
 
 interface Props {
     params: Promise<{ category: string; slug: string }>;
@@ -14,21 +18,184 @@ interface Props {
     locale?: string;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { slug } = await params;
-    const articleData = await getArticleBySlug(slug);
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://qahwaworld.com';
+
+/**
+ * Convert article SEO to PageSEO format for JsonLdSchema component
+ */
+function convertArticleSeoToPageSeo(articleSeo: any): PageSEO | null {
+  if (!articleSeo) return null;
+
+  return {
+    title: articleSeo.title || '',
+    metaDesc: articleSeo.metaDesc || '',
+    metaKeywords: articleSeo.metaKeywords || '',
+    canonical: articleSeo.canonical || '',
+    opengraphTitle: articleSeo.opengraphTitle || '',
+    opengraphDescription: articleSeo.opengraphDescription || '',
+    opengraphUrl: articleSeo.opengraphUrl || '',
+    opengraphImage: articleSeo.opengraphImage ? {
+      sourceUrl: articleSeo.opengraphImage.sourceUrl || '',
+    } : null,
+    opengraphType: articleSeo.opengraphType || 'article',
+    opengraphSiteName: articleSeo.opengraphSiteName || 'Qahwa World',
+    opengraphAuthor: articleSeo.opengraphAuthor || '',
+    opengraphPublisher: articleSeo.opengraphPublisher || '',
+    opengraphPublishedTime: articleSeo.opengraphPublishedTime || '',
+    opengraphModifiedTime: articleSeo.opengraphModifiedTime || '',
+    twitterTitle: articleSeo.opengraphTitle || '',
+    twitterDescription: articleSeo.twitterDescription || '',
+    twitterImage: articleSeo.twitterImage ? {
+      sourceUrl: articleSeo.twitterImage.sourceUrl || '',
+    } : null,
+    readingTime: articleSeo.readingTime || 0,
+    metaRobotsNoindex: articleSeo.metaRobotsNoindex || 'index',
+    metaRobotsNofollow: articleSeo.metaRobotsNofollow || 'follow',
+    breadcrumbs: [],
+    schema: articleSeo.schema ? {
+      pageType: articleSeo.schema.pageType ? [articleSeo.schema.pageType] : [],
+      raw: articleSeo.schema.raw || '',
+    } : {
+      pageType: [],
+      raw: '',
+    },
+  };
+}
+
+/**
+ * Generate BreadcrumbList schema
+ */
+function generateBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+/**
+ * Generate NewsArticle schema
+ */
+function generateNewsArticleSchema({
+  title,
+  description,
+  image,
+  datePublished,
+  dateModified,
+  authorName,
+  category,
+  url,
+  locale = 'en',
+}: {
+  title: string;
+  description: string;
+  image: string;
+  datePublished: string;
+  dateModified: string;
+  authorName: string;
+  category: string;
+  url: string;
+  locale?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: title,
+    description: description,
+    image: image,
+    datePublished: datePublished,
+    dateModified: dateModified,
+    author: {
+      '@type': 'Person',
+      name: authorName,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Qahwa World',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/images/qahwaworld-logo.svg`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    articleSection: category,
+    inLanguage: locale,
+  };
+}
+
+export async function generateMetadata({ params, locale = 'en' }: Props): Promise<Metadata> {
+    const { slug, category } = await params;
+    const decodedSlug = decodeURIComponent(slug);
+    const decodedCategory = decodeURIComponent(category);
+    const articleData = await getArticleBySlug(decodedSlug);
 
     if (!articleData) {
         return {
-            title: 'Article Not Found',
+            title: 'Article Not Found - Qahwa World',
         };
     }
 
+    const seoData = articleData.seo;
+    const articleUrl = `${siteUrl}${getLocalizedPath(`/${decodedCategory}/${decodedSlug}`, locale)}`;
+    
+    const title = seoData?.title 
+        ? `${seoData.title} - Qahwa World`
+        : `${articleData.title} - Qahwa World`;
+    const description = seoData?.metaDesc || stripHtml(articleData.excerpt).slice(0, 160);
+    const canonical = seoData?.canonical || articleUrl;
+    const ogTitle = seoData?.opengraphTitle || title;
+    const ogDescription = seoData?.opengraphDescription || description;
+    const ogUrl = seoData?.opengraphUrl || articleUrl;
+    const ogImage = seoData?.opengraphImage?.sourceUrl || articleData.featuredImage?.node?.sourceUrl;
+    const ogType = (seoData?.opengraphType === 'article' ? 'article' : 'article') as 'article';
+    const twitterTitle = seoData?.opengraphTitle || ogTitle;
+    const twitterDescription = seoData?.twitterDescription || ogDescription;
+    const twitterImage = seoData?.twitterImage?.sourceUrl || ogImage;
+    const publishedTime = seoData?.opengraphPublishedTime || articleData.date;
+    const modifiedTime = seoData?.opengraphModifiedTime || articleData.date;
+
     return {
-        title: `${articleData.title} - Qahwa World`,
-        description: stripHtml(articleData.excerpt).slice(0, 160),
+        title,
+        description,
+        keywords: seoData?.metaKeywords || `${articleData.title}, coffee, qahwa, articles`,
+        alternates: {
+            canonical,
+        },
         openGraph: {
-            images: articleData.featuredImage ? [articleData.featuredImage.node.sourceUrl] : [],
+            title: ogTitle,
+            description: ogDescription,
+            url: ogUrl,
+            siteName: seoData?.opengraphSiteName || 'Qahwa World',
+            type: ogType,
+            publishedTime: publishedTime,
+            modifiedTime: modifiedTime,
+            authors: [articleData.author.node.name],
+            ...(ogImage && {
+                images: [{
+                    url: ogImage,
+                    alt: articleData.title,
+                }],
+            }),
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: twitterTitle,
+            description: twitterDescription,
+            ...(twitterImage && {
+                images: [twitterImage],
+            }),
+        },
+        robots: {
+            index: seoData?.metaRobotsNoindex === 'noindex' ? false : true,
+            follow: seoData?.metaRobotsNofollow === 'nofollow' ? false : true,
         },
     };
 }
@@ -132,8 +299,71 @@ export default async function Page({ params, searchParams, locale = 'en' }: Prop
     const adBanners = await getHomepageAdBanner();
     const postAd = adBanners.find(banner => banner.name === 'post_ad');
 
+    // Convert article SEO to PageSEO format for JsonLdSchema
+    const pageSeoData = articleData.seo 
+        ? convertArticleSeoToPageSeo(articleData.seo) 
+        : null;
+
+    // Check if WordPress schema already contains NewsArticle/Article schema
+    let hasArticleSchema = false;
+    if (articleData.seo?.schema?.raw) {
+        try {
+            const wpSchema = typeof articleData.seo.schema.raw === 'string' 
+                ? JSON.parse(articleData.seo.schema.raw) 
+                : articleData.seo.schema.raw;
+            
+            // Check if schema contains NewsArticle or Article type
+            if (wpSchema['@graph'] && Array.isArray(wpSchema['@graph'])) {
+                hasArticleSchema = wpSchema['@graph'].some((item: any) => 
+                    item['@type'] === 'NewsArticle' || item['@type'] === 'Article'
+                );
+            } else if (wpSchema['@type'] === 'NewsArticle' || wpSchema['@type'] === 'Article') {
+                hasArticleSchema = true;
+            }
+        } catch (error) {
+            // If parsing fails, assume no schema and use our manual one
+        }
+    }
+
+    // Generate schemas
+    const t = getTranslations(locale);
+    const articleUrl = `${siteUrl}${getLocalizedPath(`/${decodedCategorySlug}/${decodedSlug}`, locale)}`;
+    const categoryUrl = `${siteUrl}${getLocalizedPath(`/${decodedCategorySlug}`, locale)}`;
+    
+    const breadcrumbSchema = generateBreadcrumbSchema([
+        { name: t.home, url: `${siteUrl}${getLocalizedPath('/', locale)}` },
+        { name: primaryCategory?.name || 'Category', url: categoryUrl },
+        { name: articleData.title, url: articleUrl },
+    ]);
+
+    // Only generate NewsArticle schema if WordPress doesn't already have one
+    const newsArticleSchema = !hasArticleSchema ? generateNewsArticleSchema({
+        title: articleData.title,
+        description: stripHtml(articleData.excerpt),
+        image: articleData.featuredImage?.node?.sourceUrl || '',
+        datePublished: articleData.date,
+        dateModified: articleData.date,
+        authorName: articleData.author.node.name,
+        category: primaryCategory?.name || 'Uncategorized',
+        url: articleUrl,
+        locale: locale,
+    }) : null;
+
     return (
         <>
+            {/* JSON-LD Schemas */}
+            {pageSeoData && <JsonLdSchema seoData={pageSeoData} />}
+            {newsArticleSchema && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleSchema) }}
+                />
+            )}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            />
+            
             <ArticleLanguageHandler
                 translations={articleData.translations || []}
                 categorySlug={decodedCategorySlug}

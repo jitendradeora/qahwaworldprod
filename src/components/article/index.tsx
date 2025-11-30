@@ -21,7 +21,6 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { SEO } from "../SEO";
 import { Language } from "../../types";
 
 const getCategoryTranslation = (
@@ -147,12 +146,6 @@ const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 
   return (
     <>
-      <SEO
-        title={`${article.title} - Qahwa World`}
-        description={article.excerpt}
-        keywords={`coffee, ${article.category}, ${article.tags?.map(tag => typeof tag === 'string' ? tag : tag.name).join(", ")}`}
-        ogImage={article.image}
-      />
       <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
         {/* Breadcrumb - Hidden on Mobile */}
         <div className="hidden md:block bg-white dark:bg-gray-800 border-b dark:border-gray-700">
