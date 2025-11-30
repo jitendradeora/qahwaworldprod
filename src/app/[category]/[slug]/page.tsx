@@ -1,5 +1,8 @@
 import { notFound } from 'next/navigation';
+import { draftMode } from 'next/headers';
+import dynamic from 'next/dynamic';
 import { getArticleBySlug, getAuthorPostCount } from '@/lib/actions/article/articleAction';
+import { fetchPreviewPostBySlug, fetchPreviewPostById } from '@/lib/actions/article/previewAction';
 import { ArticleDetailPage } from '@/components/article';
 import { ArticleLanguageHandler } from '@/components/article/ArticleLanguageHandler';
 import { stripHtml, calculateReadTime, formatDate } from '@/lib/utils';
@@ -11,6 +14,11 @@ import { JsonLdSchema } from '@/components/JsonLdSchema';
 import { PageSEO } from '@/lib/actions/seo/pagesSeoAction';
 import { getLocalizedPath } from '@/lib/localization';
 import { getTranslations } from '@/lib/translations';
+
+// Dynamically import PreviewBanner (client component)
+const PreviewBanner = dynamic(() => import('@/components/PreviewBanner'), {
+  ssr: true,
+});
 
 interface Props {
     params: Promise<{ category: string; slug: string }>;
@@ -199,18 +207,69 @@ export async function generateMetadata({ params, locale = 'en' }: Props): Promis
         },
     };
 }
+// Disable static generation (required for preview mode with searchParams)
+// This makes the page server-rendered on demand
+export const dynamicParams = true;
+
+// ISR: Revalidate every 5 minutes
+export const revalidate = 300;
+
 export default async function Page({ params, searchParams, locale = 'en' }: Props) {
     const { category: categorySlug, slug } = await params;
     // Decode the slug to handle non-Latin characters
     const decodedSlug = decodeURIComponent(slug);
     // Decode the category slug to handle non-Latin characters (e.g., Arabic, Russian)
     const decodedCategorySlug = decodeURIComponent(categorySlug);
-    const articleData = await getArticleBySlug(decodedSlug);
+    
+    // Check if we're in draft/preview mode
+    const { isEnabled: isDraftMode } = await draftMode();
+    
+    // Only get searchParams if in draft mode (to avoid static generation issues)
+    let token: string | undefined;
+    let previewId: string | undefined;
+    if (isDraftMode) {
+      const resolvedSearchParams = await searchParams;
+      token = typeof resolvedSearchParams.token === 'string' ? resolvedSearchParams.token : undefined;
+      previewId = typeof resolvedSearchParams.preview_id === 'string' ? resolvedSearchParams.preview_id : undefined;
+    }
+    
+    console.log('📄 Loading article:', { slug: decodedSlug, category: decodedCategorySlug, isDraftMode, hasToken: !!token, previewId });
+    
+    // Fetch the article (use preview API if in draft mode)
+    let articleData;
+    
+    if (isDraftMode) {
+      console.log('👁️ Fetching preview content...');
+      // Check if slug is actually a numeric ID (for preview mode)
+      const isNumericId = /^\d+$/.test(decodedSlug);
+      const useId = previewId || (isNumericId ? decodedSlug : null);
+      
+      if (useId) {
+        console.log('📡 Fetching preview post by ID:', useId);
+        articleData = await fetchPreviewPostById(useId, token);
+      } else {
+        console.log('📡 Fetching preview post by slug:', decodedSlug);
+        articleData = await fetchPreviewPostBySlug(decodedSlug, token);
+      }
+    } else {
+      articleData = await getArticleBySlug(decodedSlug);
+    }
 
     if (!articleData) {
+        console.error('❌ Article not found:', decodedSlug);
         notFound();
     }
 
+    // Verify the article belongs to the correct category (skip check in preview mode for drafts)
+    if (!isDraftMode && articleData.categories.nodes.length > 0) {
+        const categoryMatch = articleData.categories.nodes.find(cat => 
+            cat.slug === decodedCategorySlug
+        );
+        if (!categoryMatch) {
+            console.error('❌ Category mismatch:', { expected: decodedCategorySlug, actual: articleData.categories.nodes.map(c => c.slug) });
+            notFound();
+        }
+    }
 
     // Find the correct category node for display (current language or fallback)
     const primaryCategory = articleData.categories.nodes.find(cat => 
@@ -351,6 +410,12 @@ export default async function Page({ params, searchParams, locale = 'en' }: Prop
 
     return (
         <>
+            {/* Preview Banner - Only shown in draft mode */}
+            {isDraftMode && <PreviewBanner />}
+            
+            {/* Add spacing when preview banner is visible */}
+            {isDraftMode && <div className="h-16" />}
+            
             {/* JSON-LD Schemas */}
             {pageSeoData && <JsonLdSchema seoData={pageSeoData} />}
             {newsArticleSchema && (
