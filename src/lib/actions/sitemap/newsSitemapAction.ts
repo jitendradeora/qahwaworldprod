@@ -33,9 +33,7 @@ export async function getLatestPostsForNewsSitemap(
   try {
     const normalizedLang = lang.toLowerCase();
     
-    const result: {
-      data?: NewsSitemapQueryResponse;
-    } = await client.query<NewsSitemapQueryResponse>({
+    const result = await client.query<NewsSitemapQueryResponse>({
       query: GET_LATEST_POSTS_FOR_NEWS_SITEMAP,
       variables: {
         first: limit,
@@ -51,8 +49,8 @@ export async function getLatestPostsForNewsSitemap(
       },
     });
 
-    if (result.error || !result.data?.posts?.nodes) {
-      console.error('News sitemap query error:', result.error);
+    if (!result.data?.posts?.nodes) {
+      console.error('News sitemap query error: No data returned');
       return [];
     }
 
