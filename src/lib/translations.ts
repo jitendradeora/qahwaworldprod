@@ -94,14 +94,42 @@ export function getTranslations(locale: string) {
 }
 
 export function getCategoryTranslation(category: string, locale: string): string {
+  // Normalize category name (trim, handle variations)
+  const normalizedCategory = category.trim();
+  
   const categoryTranslations: Record<string, { en: string; ar: string; ru: string }> = {
     News: { en: 'News', ar: 'أخبار', ru: 'Новости' },
     'Coffee Community': { en: 'Coffee Community', ar: 'مجتمع القهوة', ru: 'Кофейное Сообщество' },
+    'Cofee Community': { en: 'Coffee Community', ar: 'مجتمع القهوة', ru: 'Кофейное Сообщество' }, // Handle typo
     Studies: { en: 'Studies', ar: 'دراسات', ru: 'Исследования' },
+    Research: { en: 'Studies', ar: 'دراسات', ru: 'Исследования' }, // Alternative name
     Interview: { en: 'Interview', ar: 'حوارات', ru: 'Интервью' },
     'Coffee Reflections': { en: 'Coffee Reflections', ar: 'تأملات', ru: 'Размышления' },
+    Reflections: { en: 'Coffee Reflections', ar: 'تأملات', ru: 'Размышления' }, // Handle short form
     Spotlight: { en: 'Spotlight', ar: 'في دائرة الضوء', ru: 'В центре внимания' },
   };
 
-  return categoryTranslations[category]?.[locale as 'en' | 'ar' | 'ru'] || category;
+  // Try exact match first
+  if (categoryTranslations[normalizedCategory]) {
+    return categoryTranslations[normalizedCategory][locale as 'en' | 'ar' | 'ru'] || category;
+  }
+
+  // Try case-insensitive match
+  const lowerCategory = normalizedCategory.toLowerCase();
+  for (const [key, translations] of Object.entries(categoryTranslations)) {
+    if (key.toLowerCase() === lowerCategory) {
+      return translations[locale as 'en' | 'ar' | 'ru'] || category;
+    }
+  }
+
+  // Try partial match for variations (e.g., "Coffee Community" matches "Cofee Community")
+  for (const [key, translations] of Object.entries(categoryTranslations)) {
+    const keyLower = key.toLowerCase();
+    if (lowerCategory.includes(keyLower) || keyLower.includes(lowerCategory)) {
+      return translations[locale as 'en' | 'ar' | 'ru'] || category;
+    }
+  }
+
+  // If no match found, return original category
+  return category;
 }

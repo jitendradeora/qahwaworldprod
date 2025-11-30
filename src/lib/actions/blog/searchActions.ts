@@ -70,8 +70,17 @@ export async function searchArticles(
       };
     }
 
-    // Normalize language to lowercase if provided
-    const normalizedLanguage = language ? language.toLowerCase() : undefined;
+    // Normalize language code - WordPress expects lowercase language codes (en, ar, ru)
+    // Map locale to WordPress language code if needed
+    const languageMap: Record<string, string> = {
+      'en': 'en',
+      'ar': 'ar',
+      'ru': 'ru',
+    };
+    // Always normalize language if provided, default to 'en' if not provided
+    const normalizedLanguage = language 
+      ? (languageMap[language.toLowerCase()] || language.toLowerCase()) 
+      : 'en'; // Default to English if no language specified
 
     const result = await client.query<{
       posts: {
@@ -89,7 +98,7 @@ export async function searchArticles(
         search: query.trim(),
         first,
         after,
-        ...(normalizedLanguage && { language: normalizedLanguage }),
+        language: normalizedLanguage, // Always include language parameter to filter results
       },
       fetchPolicy: "no-cache",
       context: {

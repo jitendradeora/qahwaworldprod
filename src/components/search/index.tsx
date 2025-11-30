@@ -4,7 +4,7 @@ import { getLocalizedPath } from '@/lib/localization';
 import { ChevronRight } from 'lucide-react';
 import { SEO } from '../SEO';
 import { SearchContent } from './SearchContent';
-import { getTranslations } from '@/lib/translations';
+import { getTranslations, getCategoryTranslation } from '@/lib/translations';
 import { searchArticles } from '@/lib/actions/blog/searchActions';
 import { Article } from '@/types';
 import { stripHtml, calculateReadTime, formatDate } from '@/lib/utils';
@@ -28,13 +28,16 @@ const SearchResultsPage = async ({ query = '', locale }: SearchResultsPageProps)
     // Transform WordPress data to Article format
     results = searchResult.articles.map((article) => {
       const primaryCategory = article.categories.nodes[0];
+      const categoryNameFromWP = primaryCategory?.name || 'Uncategorized';
+      // Translate category name based on locale
+      const categoryName = getCategoryTranslation(categoryNameFromWP, locale);
       return {
         id: article.id,
         title: article.title,
         excerpt: article.excerpt,
         content: article.content,
         image: article.featuredImage?.node.sourceUrl || '/images/placeholder.jpg',
-        category: primaryCategory?.name || 'Uncategorized',
+        category: categoryName,
         categorySlug: primaryCategory?.slug || 'uncategorized',
         author: article.author.node.name,
         date: formatDate(article.date, locale),
@@ -45,7 +48,15 @@ const SearchResultsPage = async ({ query = '', locale }: SearchResultsPageProps)
     });
   }
 
-  const categories = ['All', 'News', 'Coffee Community', 'Studies', 'Interview', 'Coffee Reflections'];
+  // Extract unique categories from search results dynamically
+  // Get unique category names (already translated above)
+  const uniqueCategories = Array.from(
+    new Set(results.map(article => article.category).filter(Boolean))
+  ).sort();
+  
+  // Translate "All" based on locale
+  const allText = locale === 'ar' ? 'الكل' : locale === 'ru' ? 'Все' : 'All';
+  const categories = [allText, ...uniqueCategories];
 
   return (
     <>
@@ -71,7 +82,7 @@ const SearchResultsPage = async ({ query = '', locale }: SearchResultsPageProps)
         {/* Search Header */}
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-700 border-b dark:border-gray-700">
           <div className="container mx-auto px-4 py-8">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl">
               <h1 className="text-3xl font-bold text-amber-900 dark:text-amber-100 mb-2">
                 {t.searchResults}
               </h1>
