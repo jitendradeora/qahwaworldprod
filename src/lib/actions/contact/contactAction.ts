@@ -42,7 +42,6 @@ export async function getContactPageData(lang: string): Promise<ContactPageData 
 
     return result.data.getContactPageData;
   } catch (error) {
-    console.error("Error fetching contact page data:", error);
     return null;
   }
 }

@@ -62,7 +62,7 @@ export const CategoryContent: React.FC<CategoryContentProps> = ({
         setEndCursor(data.pageInfo?.endCursor ?? null);
       }
     } catch (error) {
-      console.error('Error loading more articles:', error);
+      // Error loading more articles
     } finally {
       setLoading(false);
     }

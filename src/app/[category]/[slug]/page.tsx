@@ -63,7 +63,6 @@ export default async function Page({ params, searchParams, locale = 'en' }: Prop
             authorPostCount = count;
         }
     } catch (error) {
-        console.error('Error fetching author post count:', error);
         // Continue without post count if fetch fails
     }
 
@@ -125,7 +124,6 @@ export default async function Page({ params, searchParams, locale = 'en' }: Prop
                 };
             });
     } catch (error) {
-        console.error('Error fetching related articles:', error);
         // Fallback to empty array if fetch fails
         relatedArticles = [];
     }

@@ -22,8 +22,6 @@ export function JsonLdSchema({ seoData }: JsonLdSchemaProps) {
       try {
         schema = JSON.parse(seoData.schema.raw);
       } catch (parseError) {
-        console.error('JsonLdSchema: Failed to parse JSON string', parseError);
-        console.error('Raw schema string (first 200 chars):', seoData.schema.raw.substring(0, 200));
         return null;
       }
     } else {
@@ -33,7 +31,6 @@ export function JsonLdSchema({ seoData }: JsonLdSchemaProps) {
 
     // Validate that schema is an object
     if (!schema || typeof schema !== 'object') {
-      console.error('JsonLdSchema: Invalid schema format - not an object', typeof schema);
       return null;
     }
 
@@ -41,7 +38,6 @@ export function JsonLdSchema({ seoData }: JsonLdSchemaProps) {
     const schemaJson = JSON.stringify(schema);
     
     if (!schemaJson || schemaJson === '{}') {
-      console.warn('JsonLdSchema: Schema is empty after stringification');
       return null;
     }
     
@@ -52,13 +48,6 @@ export function JsonLdSchema({ seoData }: JsonLdSchemaProps) {
       />
     );
   } catch (error) {
-    console.error('Error processing JSON-LD schema:', error);
-    console.error('Raw schema data type:', typeof seoData.schema.raw);
-    if (typeof seoData.schema.raw === 'string') {
-      console.error('Raw schema data (first 500 chars):', seoData.schema.raw.substring(0, 500));
-    } else {
-      console.error('Raw schema data:', seoData.schema.raw);
-    }
     return null;
   }
 }

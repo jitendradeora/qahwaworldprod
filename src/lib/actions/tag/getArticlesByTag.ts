@@ -33,7 +33,6 @@ export async function getArticlesByTag(
     });
 
     if (error) {
-      console.error('❌ GraphQL error fetching tag articles:', error);
       return {
         articles: [],
         pageInfo: { hasNextPage: false, endCursor: null },
@@ -45,7 +44,6 @@ export async function getArticlesByTag(
       pageInfo: data?.posts?.pageInfo || { hasNextPage: false, endCursor: null },
     };
   } catch (error) {
-    console.error('❌ Error fetching articles by tag:', error);
     return {
       articles: [],
       pageInfo: { hasNextPage: false, endCursor: null },

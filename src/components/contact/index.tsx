@@ -148,7 +148,6 @@ const ContactPage: React.FC<ContactPageProps> = ({ contactData, language: initia
         });
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
       toast.error(currentContent.errorMessage, {
         description: currentContent.connectionError,
       });

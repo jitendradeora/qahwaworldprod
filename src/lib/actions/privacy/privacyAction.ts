@@ -46,7 +46,6 @@ export async function getPrivacyPolicyPageData(lang: string): Promise<PrivacyPag
 
     return result.data.getPrivacyPolicyPageData;
   } catch (error) {
-    console.error("Error fetching privacy policy page data:", error);
     return null;
   }
 }

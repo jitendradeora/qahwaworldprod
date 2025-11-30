@@ -19,7 +19,7 @@ interface Props {
 
 export function ArticleLanguageHandler({ translations, categorySlug, categoryTranslations }: Props) {
     const { setAlternatePaths } = useLanguage();
-console.log(translations)
+
     useEffect(() => {
         if (!translations || translations.length === 0) return;
 

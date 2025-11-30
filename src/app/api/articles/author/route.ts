@@ -96,7 +96,6 @@ export async function GET(request: NextRequest) {
       pageInfo,
     });
   } catch (error) {
-    console.error('Author articles API error:', error);
     return NextResponse.json(
       {
         error: 'Failed to fetch articles',

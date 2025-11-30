@@ -98,21 +98,16 @@ export async function getPagesSeo(
     });
 
     if (result.error) {
-      console.error("GraphQL error fetching pages SEO:", result.error);
       return null;
     }
 
     if (!result.data?.pages?.edges || result.data.pages.edges.length === 0) {
-      console.warn(
-        `No pages found for SEO query - Language: ${normalizedLanguage || "any"}, ID: ${id || "any"}`
-      );
       return null;
     }
 
     // Return the first page's SEO data
     return result.data.pages.edges[0].node.seo;
   } catch (error) {
-    console.error("Error fetching pages SEO data:", error);
     return null;
   }
 }
@@ -160,7 +155,6 @@ export async function getAllPagesSeo(
     // Return all pages' SEO data
     return result.data.pages.edges.map((edge) => edge.node.seo);
   } catch (error) {
-    console.error("Error fetching all pages SEO data:", error);
     return [];
   }
 }
