@@ -37,9 +37,34 @@ export interface Article {
     featured: boolean;
   };
   seo?: {
-    title: string;
+    canonical: string;
     metaDesc: string;
+    metaKeywords: string;
+    metaRobotsNofollow: string;
+    metaRobotsNoindex: string;
+    opengraphAuthor: string;
+    opengraphDescription: string;
     opengraphImage?: {
+      altText: string;
+      sourceUrl: string;
+    };
+    opengraphModifiedTime: string;
+    opengraphPublishedTime: string;
+    opengraphPublisher: string;
+    opengraphSiteName: string;
+    opengraphTitle: string;
+    opengraphType: string;
+    opengraphUrl: string;
+    readingTime: number;
+    schema?: {
+      articleType: string;
+      pageType: string;
+      raw: string;
+    };
+    title: string;
+    twitterDescription: string;
+    twitterImage?: {
+      altText: string;
       sourceUrl: string;
     };
   };
