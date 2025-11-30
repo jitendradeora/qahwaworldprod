@@ -50,6 +50,39 @@ export const GET_ARTICLES_BY_TAG = gql`
         translations {
           slug
         }
+        seo {
+        canonical
+        metaDesc
+        metaKeywords
+        metaRobotsNofollow
+        metaRobotsNoindex
+        opengraphAuthor
+        opengraphDescription
+        opengraphImage {
+          altText
+          sourceUrl
+        }
+        opengraphModifiedTime
+        opengraphPublishedTime
+        opengraphPublisher
+        opengraphSiteName
+        opengraphTitle
+        opengraphType
+        opengraphUrl
+        readingTime
+        schema {
+          articleType
+          pageType
+          raw
+        }
+        title
+        twitterDescription
+        twitterImage {
+          altText
+          sourceUrl
+        }
+      }
+      status
       }
     }
   }
