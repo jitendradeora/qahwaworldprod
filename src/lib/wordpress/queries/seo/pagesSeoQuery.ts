@@ -32,10 +32,10 @@ query pagesSeo($language: String = "", $id: Int = null) {
               raw
             }
             twitterImage {
-              sourceUrl
+              sourceUrl(size:MEDIUM)
             }
             opengraphImage {
-              sourceUrl
+              sourceUrl(size:MEDIUM)
             }
           }
         }

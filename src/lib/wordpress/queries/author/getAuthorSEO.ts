@@ -20,7 +20,7 @@ export const GET_AUTHOR_SEO_BY_AUTHOR_ID = gql`
         opengraphDescription
         opengraphImage {
           altText
-          sourceUrl
+          sourceUrl(size:MEDIUM)
         }
         opengraphTitle
         region
@@ -44,7 +44,7 @@ export const GET_AUTHOR_SEO_BY_AUTHOR_ID = gql`
         twitterDescription
         twitterImage {
           altText
-          sourceUrl
+          sourceUrl(size:MEDIUM)
         }
         twitterTitle
       }

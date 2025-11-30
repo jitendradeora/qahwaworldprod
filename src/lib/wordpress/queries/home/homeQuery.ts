@@ -10,7 +10,7 @@ export const GET_HOME_PAGE_LATEST_ARTICLES = gql`
             date
             featuredImage {
               node {
-                sourceUrl
+                sourceUrl(size:MEDIUM)
                 altText
                 mediaDetails {
                   width
