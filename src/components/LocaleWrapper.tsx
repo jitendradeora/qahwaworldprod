@@ -1,11 +1,13 @@
 'use client';
 
+import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { Toaster } from '@/components/ui/sonner';
+import { NavigationLoader } from '@/components/NavigationLoader';
 import { Language } from '@/types';
 import { Category } from '@/lib/actions/site/headerMenuAction';
 
@@ -31,6 +33,9 @@ export function LocaleWrapper({ children, menuData }: LocaleWrapperProps) {
 
   return (
     <LanguageProvider initialLanguage={locale}>
+      <Suspense fallback={null}>
+        <NavigationLoader />
+      </Suspense>
       <div className="min-h-screen flex flex-col">
         <Header key={locale} locale={locale} language={locale} menuData={menuData} />
         <main className="flex-1">

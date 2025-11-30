@@ -27,7 +27,7 @@ export const SEARCH_ARTICLES = gql`
         link
         featuredImage {
           node {
-            sourceUrl
+            sourceUrl(size:MEDIUM)
             altText
             mediaDetails {
               width

@@ -7,6 +7,8 @@ import { ArticleList } from './ArticleList';
 import { ViewToggle } from './ViewToggle';
 import { Button } from '../ui/button';
 import { Loader2 } from 'lucide-react';
+import { ArticleGridSkeleton } from '../article/ArticleGridSkeleton';
+import { ArticleListSkeleton } from '../article/ArticleListSkeleton';
 
 interface CategoryContentProps {
   initialArticles: Article[];
@@ -75,9 +77,23 @@ export const CategoryContent: React.FC<CategoryContentProps> = ({
       </div>
 
       {viewMode === 'grid' ? (
-        <ArticleGrid articles={articles} locale={locale} />
+        <>
+          <ArticleGrid articles={articles} locale={locale} />
+          {loading && (
+            <div className="mt-8">
+              <ArticleGridSkeleton count={6} />
+            </div>
+          )}
+        </>
       ) : (
-        <ArticleList articles={articles} locale={locale} />
+        <>
+          <ArticleList articles={articles} locale={locale} />
+          {loading && (
+            <div className="mt-8">
+              <ArticleListSkeleton count={3} />
+            </div>
+          )}
+        </>
       )}
 
       {/* Load More Button */}

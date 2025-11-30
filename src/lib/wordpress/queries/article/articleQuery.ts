@@ -126,7 +126,7 @@ export const GET_ARTICLES = gql`
         link
         featuredImage {
           node {
-            sourceUrl
+            sourceUrl(size:MEDIUM)
             altText
             mediaDetails {
               width
@@ -180,7 +180,7 @@ export const GET_ARTICLES_BY_CATEGORY = gql`
         link
         featuredImage {
           node {
-            sourceUrl
+            sourceUrl(size:MEDIUM)
             altText
           }
         }

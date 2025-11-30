@@ -23,7 +23,7 @@ export const GET_ARTICLES_BY_TAG = gql`
         date
         featuredImage {
           node {
-            sourceUrl
+            sourceUrl(size:MEDIUM)
           }
         }
         author {
@@ -60,7 +60,7 @@ export const GET_ARTICLES_BY_TAG = gql`
         opengraphDescription
         opengraphImage {
           altText
-          sourceUrl
+          sourceUrl(size:MEDIUM)
         }
         opengraphModifiedTime
         opengraphPublishedTime
@@ -79,7 +79,7 @@ export const GET_ARTICLES_BY_TAG = gql`
         twitterDescription
         twitterImage {
           altText
-          sourceUrl
+          sourceUrl(size:MEDIUM)
         }
       }
       status
