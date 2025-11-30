@@ -19,13 +19,6 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category');
   const id = searchParams.get('id');
 
-  console.log('🔍 Preview request received:', { 
-    token: !!token, 
-    category, 
-    id,
-    allParams: Object.fromEntries(searchParams.entries())
-  });
-
   // Validate required parameters - need token, category, and id
   if (!token || !category || !id) {
     console.error('❌ Missing required parameters', {
@@ -62,7 +55,6 @@ export async function GET(request: NextRequest) {
     // Remove /graphql suffix if present to get base WordPress URL
     const baseWpUrl = wpUrl.replace(/\/graphql\/?$/, '').replace(/\/$/, '');
 
-    console.log('🔐 Validating token with WordPress...');
     const validateUrl = `${baseWpUrl}/wp-json/nextjs/v1/validate-preview?token=${encodeURIComponent(token)}`;
     
     const validateResponse = await fetch(validateUrl, {
@@ -81,18 +73,14 @@ export async function GET(request: NextRequest) {
     }
 
     const validationData = await validateResponse.json();
-    console.log('✅ Token validated:', validationData);
 
     // 2. Enable Draft Mode
     const draft = await draftMode();
     draft.enable();
-    console.log('✅ Draft mode enabled');
 
     // 3. Construct the preview URL using the provided category and id
     // Use the article route pattern: /[category]/[id] for preview
     const previewPath = `/${category}/${id}`;
-    
-    console.log('🔄 Redirecting to:', previewPath);
 
     // 4. Redirect to the article page with preview mode enabled
     // Add query parameters to indicate this is a preview and pass the ID

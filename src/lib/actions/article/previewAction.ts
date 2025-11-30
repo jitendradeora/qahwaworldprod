@@ -12,8 +12,6 @@ import { ArticleData } from './articleAction';
  */
 export async function fetchPreviewPostById(id: string | number, token?: string): Promise<ArticleData | null> {
   try {
-    console.log('🔍 Fetching preview post by ID:', id);
-    
     const wpUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL;
     if (!wpUrl) {
       console.error('❌ NEXT_PUBLIC_WORDPRESS_API_URL not configured');
@@ -25,7 +23,6 @@ export async function fetchPreviewPostById(id: string | number, token?: string):
 
     // Try the custom preview endpoint if token is available
     if (token) {
-      console.log('📡 Using custom preview endpoint with token');
       const previewUrl = `${baseWpUrl}/wp-json/nextjs/v1/preview-post?post_id=${id}&token=${encodeURIComponent(token)}`;
       
       const response = await fetch(previewUrl, {
@@ -38,11 +35,6 @@ export async function fetchPreviewPostById(id: string | number, token?: string):
 
       if (response.ok) {
         const post = await response.json();
-        console.log('✅ Preview post fetched via custom endpoint:', {
-          id: post.id,
-          title: post.title,
-          status: post.status,
-        });
         return transformCustomRestPostToArticleData(post);
       } else {
         console.warn('⚠️ Custom preview endpoint failed:', response.status);
@@ -50,7 +42,6 @@ export async function fetchPreviewPostById(id: string | number, token?: string):
     }
 
     // Fallback: Try standard REST API (works for published posts)
-    console.log('📡 Falling back to standard REST API');
     const restUrl = `${baseWpUrl}/wp-json/wp/v2/posts/${id}?_embed`;
     
     const response = await fetch(restUrl, {
@@ -68,12 +59,6 @@ export async function fetchPreviewPostById(id: string | number, token?: string):
 
     const post = await response.json();
     
-    console.log('✅ Post fetched via standard REST API:', {
-      id: post.id,
-      title: post.title?.rendered,
-      status: post.status,
-    });
-
     return transformRestPostToArticleData(post);
   } catch (error) {
     console.error("❌ Error fetching preview post by ID:", error);
@@ -93,8 +78,6 @@ export async function fetchPreviewPostById(id: string | number, token?: string):
  */
 export async function fetchPreviewPostBySlug(slug: string, token?: string): Promise<ArticleData | null> {
   try {
-    console.log('🔍 Fetching preview post by slug:', slug);
-    
     const wpUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL;
     if (!wpUrl) {
       console.error('❌ NEXT_PUBLIC_WORDPRESS_API_URL not configured');
@@ -106,7 +89,6 @@ export async function fetchPreviewPostBySlug(slug: string, token?: string): Prom
 
     // Try the custom preview endpoint if token is available
     if (token) {
-      console.log('📡 Using custom preview endpoint with token');
       // First, we need to get the post ID from slug, then use the preview endpoint
       // WordPress preview endpoint typically uses post_id, so we'll need to fetch by slug first
       const previewUrl = `${baseWpUrl}/wp-json/nextjs/v1/preview-post-by-slug?slug=${encodeURIComponent(slug)}&token=${encodeURIComponent(token)}`;
@@ -121,11 +103,6 @@ export async function fetchPreviewPostBySlug(slug: string, token?: string): Prom
 
       if (response.ok) {
         const post = await response.json();
-        console.log('✅ Preview post fetched via custom endpoint:', {
-          id: post.id,
-          title: post.title,
-          status: post.status,
-        });
         return transformCustomRestPostToArticleData(post);
       } else {
         console.warn('⚠️ Custom preview endpoint failed:', response.status);
@@ -133,7 +110,6 @@ export async function fetchPreviewPostBySlug(slug: string, token?: string): Prom
     }
 
     // Fallback: Try standard REST API (works for published posts)
-    console.log('📡 Falling back to standard REST API');
     const restUrl = `${baseWpUrl}/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed&status=any`;
     
     const response = await fetch(restUrl, {
@@ -158,12 +134,6 @@ export async function fetchPreviewPostBySlug(slug: string, token?: string): Prom
 
     const post = posts[0];
     
-    console.log('✅ Post fetched via standard REST API:', {
-      id: post.id,
-      title: post.title?.rendered,
-      status: post.status,
-    });
-
     return transformRestPostToArticleData(post);
   } catch (error) {
     console.error("❌ Error fetching preview post by slug:", error);
